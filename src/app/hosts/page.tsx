@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { requireAuth } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { getHosts } from '@/lib/database'
 import HostsList from '@/components/HostsList'
 
 export default async function HostsPage() {
-  // Require authentication to access hosts page
-  await requireAuth()
+  // Check authentication but don't redirect
+  const user = await getUser()
   
   // Fetch real data from Supabase
   const hosts = await getHosts()

@@ -58,7 +58,7 @@ export function AuthButton() {
         console.log('AuthButton: Timeout reached, setting loading to false')
         setLoading(false)
       }
-    }, 3000)
+    }, 10000) // Increased timeout to 10 seconds
 
     return () => {
       mounted = false

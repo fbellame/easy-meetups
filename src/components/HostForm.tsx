@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -68,6 +69,8 @@ const TIME_PREFERENCE_OPTIONS = [
 export default function HostForm({ initialData, isEditing = false }: HostFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [formData, setFormData] = useState<HostFormData>({
     name: initialData?.name || '',
     email: initialData?.email || '',
@@ -84,6 +87,23 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
     }
   })
 
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setIsAuthenticated(!!session?.user)
+      } catch (error) {
+        console.error('Auth check error:', error)
+        setIsAuthenticated(false)
+      } finally {
+        setAuthLoading(false)
+      }
+    }
+    
+    checkAuth()
+  }, [])
+
   const handleInputChange = (field: keyof HostFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -92,12 +112,24 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
   }
 
   const handleArrayChange = (field: 'amenities' | 'event_types' | 'time_preferences', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
-        : [...prev[field], value]
-    }))
+    if (field === 'amenities') {
+      setFormData(prev => ({
+        ...prev,
+        amenities: prev.amenities.includes(value)
+          ? prev.amenities.filter(item => item !== value)
+          : [...prev.amenities, value]
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          [field]: prev.preferences[field].includes(value)
+            ? prev.preferences[field].filter((item: string) => item !== value)
+            : [...prev.preferences[field], value]
+        }
+      }))
+    }
   }
 
   const handlePreferencesChange = (field: keyof HostFormData['preferences'], value: string | string[]) => {
@@ -142,6 +174,36 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
     }
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show authentication required message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-yellow-800 mb-2">Authentication Required</h3>
+          <p className="text-yellow-700 mb-4">You need to be signed in to create or edit hosts.</p>
+          <button
+            onClick={() => router.push('/auth/login')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Basic Information */}
@@ -149,9 +211,9 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
         <h3 className="text-lg font-medium text-gray-900 mb-6">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-800 mb-2">
               <UserIcon className="h-4 w-4 inline mr-1" />
-              Full Name *
+              Company Contact Name *
             </label>
             <input
               type="text"
@@ -159,15 +221,15 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               required
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter full name"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="Enter company contact name"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-2">
               <EnvelopeIcon className="h-4 w-4 inline mr-1" />
-              Email Address *
+              Contact Email Address *
             </label>
             <input
               type="email"
@@ -175,28 +237,28 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               required
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter email address"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="Enter contact email address"
             />
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-800 mb-2">
               <PhoneIcon className="h-4 w-4 inline mr-1" />
-              Phone Number
+              Contact Phone Number
             </label>
             <input
               type="tel"
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter phone number"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="Enter contact phone number"
             />
           </div>
 
           <div>
-            <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="company" className="block text-sm font-medium text-gray-800 mb-2">
               <BuildingOfficeIcon className="h-4 w-4 inline mr-1" />
               Company
             </label>
@@ -205,7 +267,7 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               id="company"
               value={formData.company}
               onChange={(e) => handleInputChange('company', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
               placeholder="Enter company name"
             />
           </div>
@@ -217,7 +279,7 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
         <h3 className="text-lg font-medium text-gray-900 mb-6">Venue Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="venue_name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="venue_name" className="block text-sm font-medium text-gray-800 mb-2">
               <MapPinIcon className="h-4 w-4 inline mr-1" />
               Venue Name
             </label>
@@ -226,13 +288,13 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               id="venue_name"
               value={formData.venue_name}
               onChange={(e) => handleInputChange('venue_name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
               placeholder="Enter venue name"
             />
           </div>
 
           <div>
-            <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="capacity" className="block text-sm font-medium text-gray-800 mb-2">
               <UsersIcon className="h-4 w-4 inline mr-1" />
               Capacity
             </label>
@@ -242,13 +304,13 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               min="1"
               value={formData.capacity}
               onChange={(e) => handleInputChange('capacity', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
               placeholder="Enter maximum capacity"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label htmlFor="venue_address" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="venue_address" className="block text-sm font-medium text-gray-800 mb-2">
               <MapPinIcon className="h-4 w-4 inline mr-1" />
               Venue Address
             </label>
@@ -257,7 +319,7 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               rows={3}
               value={formData.venue_address}
               onChange={(e) => handleInputChange('venue_address', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
               placeholder="Enter full venue address"
             />
           </div>
@@ -276,7 +338,7 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
                 onChange={() => handleArrayChange('amenities', amenity)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <span className="text-sm text-gray-700">{amenity}</span>
+                  <span className="text-sm text-gray-800">{amenity}</span>
             </label>
           ))}
         </div>
@@ -287,7 +349,7 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
         <h3 className="text-lg font-medium text-gray-900 mb-6">Event Preferences</h3>
         <div className="space-y-6">
           <div>
-            <label htmlFor="tech_stack" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="tech_stack" className="block text-sm font-medium text-gray-800 mb-2">
               Preferred Tech Stack
             </label>
             <input
@@ -295,13 +357,13 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               id="tech_stack"
               value={formData.preferences.tech_stack}
               onChange={(e) => handlePreferencesChange('tech_stack', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
               placeholder="e.g., React, Node.js, Python, etc."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-800 mb-3">
               Preferred Event Types
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -313,14 +375,14 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
                     onChange={() => handleArrayChange('event_types', type)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <span className="text-sm text-gray-700">{type}</span>
+                  <span className="text-sm text-gray-800">{type}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-800 mb-3">
               Preferred Times
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -332,7 +394,7 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
                     onChange={() => handleArrayChange('time_preferences', time)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <span className="text-sm text-gray-700">{time}</span>
+                  <span className="text-sm text-gray-800">{time}</span>
                 </label>
               ))}
             </div>

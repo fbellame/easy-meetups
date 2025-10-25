@@ -12,26 +12,37 @@ import type {
 
 // Hosts
 export async function getHosts(): Promise<Host[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('hosts')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data || []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('hosts')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Database connection error:', error)
+    // Return empty array if database is not connected
+    return []
+  }
 }
 
 export async function getHost(id: string): Promise<Host | null> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('hosts')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (error) throw error
-  return data
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('hosts')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error('Database connection error:', error)
+    return null
+  }
 }
 
 export async function createHost(host: Omit<Host, 'id' | 'created_at' | 'updated_at'>): Promise<Host> {

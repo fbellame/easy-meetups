@@ -1,4 +1,4 @@
-import { requireAuth } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { getHost } from '@/lib/database'
 import HostForm from '@/components/HostForm'
 import { notFound } from 'next/navigation'
@@ -10,8 +10,8 @@ interface EditHostPageProps {
 }
 
 export default async function EditHostPage({ params }: EditHostPageProps) {
-  // Require authentication to access this page
-  await requireAuth()
+  // Check authentication but don't redirect
+  const user = await getUser()
 
   const host = await getHost(params.id)
   
@@ -24,7 +24,7 @@ export default async function EditHostPage({ params }: EditHostPageProps) {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Edit Host</h1>
         <p className="mt-2 text-gray-600">
-          Update host information and preferences
+          Update company contact information and preferences
         </p>
       </div>
 

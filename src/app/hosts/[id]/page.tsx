@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { requireAuth } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { getHost } from '@/lib/database'
 import { notFound } from 'next/navigation'
 import { 
@@ -19,8 +19,8 @@ interface HostDetailPageProps {
 }
 
 export default async function HostDetailPage({ params }: HostDetailPageProps) {
-  // Require authentication to access this page
-  await requireAuth()
+  // Check authentication but don't redirect
+  const user = await getUser()
 
   const host = await getHost(params.id)
   
