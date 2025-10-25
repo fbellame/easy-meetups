@@ -1,13 +1,9 @@
 import Link from 'next/link'
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { requireAuth } from '@/lib/auth'
 import { getSpeakers } from '@/lib/database'
 import SpeakersList from '@/components/SpeakersList'
 
 export default async function SpeakersPage() {
-  // Require authentication to access speakers page
-  await requireAuth()
-  
   // Fetch real data from Supabase
   const speakers = await getSpeakers()
 
