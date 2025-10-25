@@ -13,16 +13,17 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface HostDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function HostDetailPage({ params }: HostDetailPageProps) {
   // Check authentication but don't redirect
   const user = await getUser()
 
-  const host = await getHost(params.id)
+  const { id } = await params
+  const host = await getHost(id)
   
   if (!host) {
     notFound()

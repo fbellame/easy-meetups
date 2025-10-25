@@ -4,16 +4,17 @@ import HostForm from '@/components/HostForm'
 import { notFound } from 'next/navigation'
 
 interface EditHostPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditHostPage({ params }: EditHostPageProps) {
   // Check authentication but don't redirect
   const user = await getUser()
 
-  const host = await getHost(params.id)
+  const { id } = await params
+  const host = await getHost(id)
   
   if (!host) {
     notFound()
@@ -37,9 +38,13 @@ export default async function EditHostPage({ params }: EditHostPageProps) {
           company: host.company || '',
           venue_name: host.venue_name || '',
           venue_address: host.venue_address || '',
-          capacity: host.capacity || 0,
+          capacity: host.capacity?.toString() || '0',
           amenities: host.amenities || [],
-          preferences: host.preferences || {}
+          preferences: {
+            tech_stack: host.preferences?.tech_stack || '',
+            event_types: host.preferences?.event_types || [],
+            time_preferences: host.preferences?.time_preferences || []
+          }
         }}
         isEditing={true}
       />
