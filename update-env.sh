@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "🔧 Easy Meetup - Environment Setup"
+echo "=================================="
+echo ""
+echo "To fix the Supabase connection error, you need to:"
+echo ""
+echo "1. Go to your Supabase Dashboard: https://supabase.com/dashboard"
+echo "2. Select your project (iwporuaungxdehnyklym)"
+echo "3. Navigate to Settings → API"
+echo "4. Copy the 'anon public' key"
+echo "5. Run this command to update your .env.local file:"
+echo ""
+echo "   sed -i '' 's/your_supabase_anon_key/YOUR_ACTUAL_ANON_KEY/' .env.local"
+echo ""
+echo "   (Replace YOUR_ACTUAL_ANON_KEY with your real anon key)"
+echo ""
+echo "6. Restart your development server: npm run dev"
+echo ""
+echo "Current .env.local content:"
+echo "=========================="
+cat .env.local
