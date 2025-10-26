@@ -322,6 +322,94 @@ export async function deleteAnnouncement(id: string): Promise<void> {
   if (error) throw error
 }
 
+// Event Speakers
+export async function getEventSpeakers(eventId: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('event_speakers')
+      .select(`
+        *,
+        speakers (
+          id,
+          name,
+          email,
+          bio,
+          expertise
+        )
+      `)
+      .eq('event_id', eventId)
+      .order('speaking_order')
+    
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Database connection error:', error)
+    return []
+  }
+}
+
+export async function createEventSpeakers(eventId: string, speakerIds: string[]) {
+  const supabase = await createClient()
+  
+  // First, remove existing speaker assignments for this event
+  await supabase
+    .from('event_speakers')
+    .delete()
+    .eq('event_id', eventId)
+
+  // Then, add new speaker assignments
+  const eventSpeakers = speakerIds.map((speaker_id, index) => ({
+    event_id: eventId,
+    speaker_id,
+    speaking_order: index + 1
+  }))
+
+  const { data, error } = await supabase
+    .from('event_speakers')
+    .insert(eventSpeakers)
+    .select()
+  
+  if (error) throw error
+  return data
+}
+
+export async function getEventWithDetails(id: string): Promise<EventWithDetails | null> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        hosts (
+          id,
+          name,
+          email,
+          company,
+          venue_name,
+          venue_address,
+          capacity
+        )
+      `)
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    if (!data) return null
+
+    // Get speakers for this event
+    const speakers = await getEventSpeakers(id)
+    
+    return {
+      ...data,
+      speakers
+    }
+  } catch (error) {
+    console.error('Database connection error:', error)
+    return null
+  }
+}
+
 // Dashboard Stats
 export async function getDashboardStats() {
   try {

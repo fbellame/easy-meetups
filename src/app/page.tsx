@@ -14,7 +14,7 @@ import {
 import Link from 'next/link'
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -55,7 +55,7 @@ export default function Dashboard() {
     totalMembers: 156
   }
   
-  const events = []
+  const events: any[] = []
 
   const stats = [
     { name: 'Upcoming Events', value: statsData.totalEvents.toString(), icon: CalendarDaysIcon, href: '/events' },

@@ -103,7 +103,7 @@ export default async function HostDetailPage({ params }: HostDetailPageProps) {
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Available Amenities</h3>
               <div className="flex flex-wrap gap-2">
-                {host.amenities.map((amenity, index) => (
+                {host.amenities.map((amenity: string, index: number) => (
                   <span 
                     key={index} 
                     className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full"
@@ -130,7 +130,7 @@ export default async function HostDetailPage({ params }: HostDetailPageProps) {
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Preferred Event Types</h4>
                     <div className="flex flex-wrap gap-2">
-                      {host.preferences.event_types.map((type, index) => (
+                      {host.preferences.event_types.map((type: string, index: number) => (
                         <span 
                           key={index} 
                           className="px-2 py-1 bg-green-50 text-green-700 text-sm rounded"
@@ -145,7 +145,7 @@ export default async function HostDetailPage({ params }: HostDetailPageProps) {
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Preferred Times</h4>
                     <div className="flex flex-wrap gap-2">
-                      {host.preferences.time_preferences.map((time, index) => (
+                      {host.preferences.time_preferences.map((time: string, index: number) => (
                         <span 
                           key={index} 
                           className="px-2 py-1 bg-purple-50 text-purple-700 text-sm rounded"
