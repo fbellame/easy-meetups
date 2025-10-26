@@ -57,24 +57,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
-      .from('event_speakers')
-      .select(`
-        *,
-        speakers (
-          id,
-          name,
-          email,
-          bio,
-          expertise
-        )
-      `)
-      .eq('event_id', event_id)
-      .order('speaking_order')
+    // Use the database function instead of direct Supabase query
+    const { getEventSpeakers } = await import('@/lib/database')
+    const data = await getEventSpeakers(event_id)
 
-    if (error) throw error
+    // Debug: Log the raw data
+    console.log('Event speakers API raw data:', data)
 
     return NextResponse.json(data || [])
   } catch (error) {

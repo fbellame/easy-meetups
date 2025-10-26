@@ -386,44 +386,51 @@ export async function deleteAnnouncement(id: string): Promise<void> {
 export async function getEventSpeakers(eventId: string) {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
+    
+    // First, get the event_speakers records
+    const { data: eventSpeakers, error: eventSpeakersError } = await supabase
       .from('event_speakers')
-      .select(`
-        *,
-        speakers (
-          id,
-          name,
-          email,
-          bio,
-          expertise,
-          profile_photo_url
-        )
-      `)
+      .select('*')
       .eq('event_id', eventId)
       .order('speaking_order')
     
-    if (error) {
-      console.error('Error fetching event speakers:', error)
-      throw error
+    if (eventSpeakersError) {
+      console.error('Error fetching event speakers:', eventSpeakersError)
+      throw eventSpeakersError
     }
     
-    // Debug: Log what we're getting
-    console.log(`getEventSpeakers for event ${eventId}:`, data)
+    if (!eventSpeakers || eventSpeakers.length === 0) {
+      console.log(`No event speakers found for event ${eventId}`)
+      return []
+    }
     
-    // Ensure proper data formatting and validate speaker data
-    const formattedData = (data || []).map(item => {
-      // Check if speaker data is properly joined
-      if (!item.speakers) {
-        console.warn(`Event speaker ${item.id} has no speaker data joined`)
-      }
-      
+    // Get the speaker IDs
+    const speakerIds = eventSpeakers.map(es => es.speaker_id)
+    
+    // Then, get the speaker details
+    const { data: speakers, error: speakersError } = await supabase
+      .from('speakers')
+      .select('id, name, email, bio, expertise, profile_photo_url')
+      .in('id', speakerIds)
+    
+    if (speakersError) {
+      console.error('Error fetching speakers:', speakersError)
+      throw speakersError
+    }
+    
+    // Combine the data
+    const combinedData = eventSpeakers.map(eventSpeaker => {
+      const speaker = speakers?.find(s => s.id === eventSpeaker.speaker_id)
       return {
-        ...item,
-        created_at: item.created_at ? new Date(item.created_at).toISOString() : item.created_at
+        ...eventSpeaker,
+        speaker: speaker || null,
+        created_at: eventSpeaker.created_at ? new Date(eventSpeaker.created_at).toISOString() : eventSpeaker.created_at
       }
     })
     
-    return formattedData
+    console.log(`getEventSpeakers for event ${eventId}:`, combinedData)
+    
+    return combinedData
   } catch (error) {
     console.error('Database connection error:', error)
     return []

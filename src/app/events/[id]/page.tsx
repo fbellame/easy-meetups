@@ -18,7 +18,9 @@ import DeleteEventButton from '@/components/DeleteEventButton'
 
 // Utility functions for consistent date formatting across server and client
 const formatEventDate = (dateString: string): string => {
-  const date = new Date(dateString)
+  // Parse the date string as local date to avoid timezone issues
+  const [year, month, day] = dateString.split('-').map(Number)
+  const date = new Date(year, month - 1, day) // month is 0-indexed
   return date.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -229,7 +231,29 @@ export default async function EventPage({ params }: EventPageProps) {
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">{eventSpeaker.speaker?.name || 'Unknown Speaker'}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{eventSpeaker.speaker?.bio || 'No bio available'}</p>
+                      <div className="mt-1 space-y-1">
+                        {eventSpeaker.speaker?.email && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Email:</span> {eventSpeaker.speaker.email}
+                          </p>
+                        )}
+                        {eventSpeaker.speaker?.social_links?.linkedin && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">LinkedIn:</span>{' '}
+                            <a 
+                              href={eventSpeaker.speaker.social_links.linkedin}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {eventSpeaker.speaker.social_links.linkedin}
+                            </a>
+                          </p>
+                        )}
+                        {!eventSpeaker.speaker?.email && !eventSpeaker.speaker?.social_links?.linkedin && (
+                          <p className="text-sm text-gray-500 italic">No contact information available</p>
+                        )}
+                      </div>
                       {eventSpeaker.speaker?.expertise && eventSpeaker.speaker.expertise.length > 0 && (
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-1">

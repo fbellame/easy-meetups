@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSpeaker, updateSpeaker } from '@/lib/database'
+import { createSpeaker, updateSpeaker, getSpeakers } from '@/lib/database'
 import type { Speaker } from '@/types/database'
+
+export async function GET() {
+  try {
+    const speakers = await getSpeakers()
+    return NextResponse.json(speakers)
+  } catch (error) {
+    console.error('Error fetching speakers:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch speakers' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
