@@ -42,22 +42,24 @@ export default function Dashboard() {
         setUser(session.user)
         
         // Fetch real data from database
-        const [eventsResult, hostsResult, speakersResult] = await Promise.all([
+        const [eventsResult, hostsResult, speakersResult, membersResult] = await Promise.all([
           supabase.from('events').select('*').order('created_at', { ascending: false }),
           supabase.from('hosts').select('*'),
-          supabase.from('speakers').select('*')
+          supabase.from('speakers').select('*'),
+          supabase.from('community_members').select('*')
         ])
 
         const events = eventsResult.data || []
         const hosts = hostsResult.data || []
         const speakers = speakersResult.data || []
+        const members = membersResult.data || []
 
         // Calculate real stats
         setStatsData({
           totalEvents: events.length,
           totalHosts: hosts.length,
           totalSpeakers: speakers.length,
-          totalMembers: 0 // We don't have a members table yet
+          totalMembers: members.length
         })
 
         // Get recent events (last 3) with host information
