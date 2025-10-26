@@ -34,36 +34,80 @@ export async function POST(request: NextRequest) {
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''))
     console.log('Headers found:', headers)
     
-    // Find column indices - look for all available fields
-    const columnIndices: Record<string, number> = {}
+    // Map headers to database fields
+    const headerMapping: Record<string, string> = {
+      'name': 'name',
+      'email': 'email',
+      'phone': 'phone',
+      'company': 'company',
+      'city': 'city',
+      'meetup url': 'meetup_url',
+      'meetup_url': 'meetup_url',
+      'bio': 'bio',
+      'linkedin': 'linkedin_url',
+      'linkedin_url': 'linkedin_url',
+      'twitter': 'twitter_url',
+      'twitter_url': 'twitter_url',
+      'github': 'github_url',
+      'github_url': 'github_url',
+      'website': 'website_url',
+      'website_url': 'website_url',
+      'interests': 'interests',
+      'rejoindre le groupe le': 'join_date',
+      'dernier groupe visité le': 'last_active',
+      'last attended': 'last_attended',
+      'total des réponses': 'total_responses',
+      'répondu oui': 'responded_yes',
+      'répondu peut-être': 'responded_maybe',
+      'répondu non': 'responded_no',
+      'meetups attended': 'meetups_attended',
+      'absences': 'absences',
+      'présentation': 'bio',
+      'photo': 'has_photo',
+      'assistant organizer': 'is_assistant_organizer',
+      'liste de diffusion': 'is_on_mailing_list',
+      'url du profil de membre': 'meetup_url',
+      // Enhanced mappings for the fields from the image
+      'joined group on': 'join_date',
+      'last visited group on': 'last_active',
+      'all time rsvps': 'total_responses',
+      'all time \'yes\' rsvps': 'responded_yes',
+      'all time \'no\' rsvps': 'responded_no',
+      'all time yes rsvps': 'responded_yes',
+      'all time no rsvps': 'responded_no',
+      'events attended': 'meetups_attended',
+      // Additional variations and common formats
+      'joined group': 'join_date',
+      'join date': 'join_date',
+      'member since': 'join_date',
+      'last visit': 'last_active',
+      'last activity': 'last_active',
+      'last seen': 'last_active',
+      'total rsvps': 'total_responses',
+      'rsvps total': 'total_responses',
+      'yes rsvps': 'responded_yes',
+      'no rsvps': 'responded_no',
+      'maybe rsvps': 'responded_maybe',
+      'attended events': 'meetups_attended',
+      'events participated': 'meetups_attended',
+      'meetups participated': 'meetups_attended',
+      'title': 'title',
+      'meetup user id': 'meetup_user_id',
+      'meetup member id': 'meetup_member_id',
+      'has photo': 'has_photo',
+      'assistant organizer': 'is_assistant_organizer',
+      'on mailing list': 'is_on_mailing_list'
+    }
     
+    // Find column indices
+    const columnIndices: Record<string, number> = {}
     headers.forEach((header, index) => {
-      const cleanHeader = header.toLowerCase().trim()
-      
-      if (cleanHeader === 'name') {
-        columnIndices.name = index
-      } else if (cleanHeader === 'email') {
-        columnIndices.email = index
-      } else if (cleanHeader === 'phone') {
-        columnIndices.phone = index
-      } else if (cleanHeader === 'company') {
-        columnIndices.company = index
-      } else if (cleanHeader === 'city') {
-        columnIndices.city = index
-      } else if (cleanHeader === 'meetup url' || cleanHeader === 'meetup_url') {
-        columnIndices.meetup_url = index
-      } else if (cleanHeader === 'bio') {
-        columnIndices.bio = index
-      } else if (cleanHeader === 'linkedin' || cleanHeader === 'linkedin_url') {
-        columnIndices.linkedin_url = index
-      } else if (cleanHeader === 'twitter' || cleanHeader === 'twitter_url') {
-        columnIndices.twitter_url = index
-      } else if (cleanHeader === 'github' || cleanHeader === 'github_url') {
-        columnIndices.github_url = index
-      } else if (cleanHeader === 'website' || cleanHeader === 'website_url') {
-        columnIndices.website_url = index
-      } else if (cleanHeader === 'interests') {
-        columnIndices.interests = index
+      const mappedColumn = headerMapping[header]
+      if (mappedColumn) {
+        columnIndices[mappedColumn] = index
+        console.log(`Mapped column "${header}" (index ${index}) -> ${mappedColumn}`)
+      } else {
+        console.log(`Unmapped column: "${header}" (index ${index})`)
       }
     })
     
@@ -129,6 +173,71 @@ export async function POST(request: NextRequest) {
           }
         }
         
+        // Parse join date
+        let join_date = new Date().toISOString()
+        if (columnIndices.join_date !== undefined) {
+          const joinDateStr = values[columnIndices.join_date]
+          if (joinDateStr && joinDateStr.trim()) {
+            try {
+              console.log('Parsing join date:', joinDateStr)
+              const date = parseFrenchDate(joinDateStr)
+              if (date) {
+                join_date = date.toISOString()
+                console.log('Successfully parsed join date:', join_date)
+              } else {
+                console.log('Failed to parse join date, using current date')
+              }
+            } catch (e) {
+              console.log('Could not parse join date:', joinDateStr, 'Error:', e)
+            }
+          }
+        }
+        
+        // Parse last active date
+        let last_active = new Date().toISOString()
+        if (columnIndices.last_active !== undefined) {
+          const lastActiveStr = values[columnIndices.last_active]
+          if (lastActiveStr && lastActiveStr.trim()) {
+            try {
+              const date = parseFrenchDate(lastActiveStr)
+              if (date) {
+                last_active = date.toISOString()
+              }
+            } catch (e) {
+              console.log('Could not parse last active date:', lastActiveStr)
+            }
+          }
+        }
+        
+        // Parse last attended date
+        let last_attended = null
+        if (columnIndices.last_attended !== undefined) {
+          const lastAttendedStr = values[columnIndices.last_attended]
+          if (lastAttendedStr && lastAttendedStr.trim()) {
+            try {
+              const date = parseFrenchDate(lastAttendedStr)
+              if (date) {
+                last_attended = date.toISOString()
+              }
+            } catch (e) {
+              console.log('Could not parse last attended date:', lastAttendedStr)
+            }
+          }
+        }
+        
+        // Extract numeric values with better parsing
+        const total_responses = parseNumericValue(values[columnIndices.total_responses], 'total_responses')
+        const responded_yes = parseNumericValue(values[columnIndices.responded_yes], 'responded_yes')
+        const responded_maybe = parseNumericValue(values[columnIndices.responded_maybe], 'responded_maybe')
+        const responded_no = parseNumericValue(values[columnIndices.responded_no], 'responded_no')
+        const meetups_attended = parseNumericValue(values[columnIndices.meetups_attended], 'meetups_attended')
+        const absences = parseNumericValue(values[columnIndices.absences], 'absences')
+        
+        // Extract boolean values
+        const has_photo = (values[columnIndices.has_photo] || '').toLowerCase() === 'yes'
+        const is_assistant_organizer = (values[columnIndices.is_assistant_organizer] || '').toLowerCase() === 'yes'
+        const is_on_mailing_list = (values[columnIndices.is_on_mailing_list] || '').toLowerCase() === 'yes'
+        
         const member: any = {
           name: name.trim(),
           email: email.trim(),
@@ -142,8 +251,21 @@ export async function POST(request: NextRequest) {
           github_url: github_url,
           website_url: website_url,
           interests: interests,
-          join_date: new Date().toISOString(),
-          last_active: new Date().toISOString()
+          join_date: join_date,
+          last_active: last_active,
+          last_attended: last_attended,
+          meetup_user_id: values[columnIndices.meetup_user_id] || null,
+          meetup_member_id: values[columnIndices.meetup_member_id] || null,
+          title: values[columnIndices.title] || null,
+          total_responses: total_responses,
+          responded_yes: responded_yes,
+          responded_maybe: responded_maybe,
+          responded_no: responded_no,
+          meetups_attended: meetups_attended,
+          absences: absences,
+          has_photo: has_photo,
+          is_assistant_organizer: is_assistant_organizer,
+          is_on_mailing_list: is_on_mailing_list
         }
         
         members.push(member)
@@ -204,6 +326,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Helper function to parse numeric values with better error handling
+function parseNumericValue(value: string | undefined, fieldName: string): number {
+  if (!value || value.trim() === '') {
+    return 0
+  }
+  
+  try {
+    // Remove any non-numeric characters except minus sign
+    const cleanValue = value.trim().replace(/[^\d-]/g, '')
+    const parsed = parseInt(cleanValue)
+    
+    if (isNaN(parsed)) {
+      console.log(`Could not parse ${fieldName}: "${value}", using 0`)
+      return 0
+    }
+    
+    console.log(`Parsed ${fieldName}: "${value}" -> ${parsed}`)
+    return parsed
+  } catch (e) {
+    console.log(`Error parsing ${fieldName}: "${value}", using 0`)
+    return 0
+  }
+}
+
 // Helper function to parse CSV line properly (handle quoted values)
 function parseCSVLine(line: string): string[] {
   const result = []
@@ -225,4 +371,104 @@ function parseCSVLine(line: string): string[] {
   
   result.push(current.trim())
   return result
+}
+
+// Helper function to parse French and English dates
+function parseFrenchDate(dateStr: string): Date | null {
+  if (!dateStr) return null
+  
+  // French month names
+  const frenchMonths: Record<string, number> = {
+    'janvier': 0, 'février': 1, 'fevrier': 1, 'mars': 2, 'avril': 3, 'mai': 4, 'juin': 5,
+    'juillet': 6, 'aout': 7, 'août': 7, 'septembre': 8, 'octobre': 9, 'novembre': 10, 'décembre': 11, 'decembre': 11
+  }
+  
+  // English month names
+  const englishMonths: Record<string, number> = {
+    'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+    'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
+  }
+  
+  try {
+    const cleanDateStr = dateStr.trim().replace(/['"]/g, '').toLowerCase()
+    
+    // Handle format like "6 juin 2024" (French) or "6 june 2024" (English)
+    const parts = cleanDateStr.split(' ')
+    if (parts.length === 3) {
+      const day = parseInt(parts[0])
+      const monthName = parts[1]
+      const year = parseInt(parts[2])
+      
+      if (!isNaN(day) && !isNaN(year)) {
+        if (frenchMonths[monthName] !== undefined) {
+          return new Date(year, frenchMonths[monthName], day)
+        }
+        if (englishMonths[monthName] !== undefined) {
+          return new Date(year, englishMonths[monthName], day)
+        }
+      }
+    }
+    
+    // Handle format like "June 6, 2024" (English)
+    if (cleanDateStr.includes(',')) {
+      const commaParts = cleanDateStr.split(',')
+      if (commaParts.length === 2) {
+        const monthDayPart = commaParts[0].trim()
+        const year = parseInt(commaParts[1].trim())
+        const monthDayParts = monthDayPart.split(' ')
+        
+        if (monthDayParts.length === 2 && !isNaN(year)) {
+          const monthName = monthDayParts[0]
+          const day = parseInt(monthDayParts[1])
+          
+          if (!isNaN(day) && englishMonths[monthName] !== undefined) {
+            return new Date(year, englishMonths[monthName], day)
+          }
+        }
+      }
+    }
+    
+    // Handle format like "2024-06-06" (ISO format)
+    if (cleanDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const date = new Date(cleanDateStr)
+      if (!isNaN(date.getTime())) {
+        return date
+      }
+    }
+    
+    // Handle format like "06/06/2024" (MM/DD/YYYY or DD/MM/YYYY)
+    if (cleanDateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+      const parts = cleanDateStr.split('/')
+      const month = parseInt(parts[0]) - 1 // JavaScript months are 0-indexed
+      const day = parseInt(parts[1])
+      const year = parseInt(parts[2])
+      
+      if (!isNaN(month) && !isNaN(day) && !isNaN(year)) {
+        // Try MM/DD/YYYY first
+        let date = new Date(year, month, day)
+        if (!isNaN(date.getTime())) {
+          return date
+        }
+        
+        // Try DD/MM/YYYY if MM/DD/YYYY doesn't make sense
+        if (month > 12) {
+          date = new Date(year, day - 1, month)
+          if (!isNaN(date.getTime())) {
+            return date
+          }
+        }
+      }
+    }
+    
+    // Fallback to regular date parsing
+    const fallbackDate = new Date(cleanDateStr)
+    if (!isNaN(fallbackDate.getTime())) {
+      return fallbackDate
+    }
+    
+    return null
+  } catch (e) {
+    console.log('Date parsing error:', e)
+    return null
+  }
 }
