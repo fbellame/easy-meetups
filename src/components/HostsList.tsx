@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   UserGroupIcon, 
   MapPinIcon, 
   PhoneIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  UserIcon
 } from '@heroicons/react/24/outline'
 import type { Host } from '@/types/database'
 
@@ -47,17 +49,35 @@ export default function HostsList({ hosts }: HostsListProps) {
           <div key={host.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{host.name}</h3>
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                    {host.profile_photo_url ? (
+                      <Image
+                        src={host.profile_photo_url}
+                        alt={host.name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon className="h-6 w-6 text-blue-600" />
+                    )}
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-lg font-semibold text-gray-900">{host.name}</h3>
+                    <p className="text-sm text-gray-600">{host.email}</p>
+                  </div>
+                </div>
                 <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                   Active
                 </span>
               </div>
               
+              {host.bio && (
+                <p className="text-sm text-gray-600 mb-4 line-clamp-3">{host.bio}</p>
+              )}
+              
               <div className="space-y-3 mb-4">
-                <div className="flex items-center text-sm text-gray-600">
-                  <EnvelopeIcon className="h-4 w-4 mr-2" />
-                  {host.email}
-                </div>
                 {host.phone && (
                   <div className="flex items-center text-sm text-gray-600">
                     <PhoneIcon className="h-4 w-4 mr-2" />
@@ -100,6 +120,25 @@ export default function HostsList({ hosts }: HostsListProps) {
                       <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
                         {amenity}
                       </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {host.social_links && Object.keys(host.social_links).length > 0 && (
+                <div className="mb-4">
+                  <div className="text-sm text-gray-600 mb-2">Social Links</div>
+                  <div className="flex space-x-2">
+                    {Object.entries(host.social_links).map(([platform, url]) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 text-sm"
+                      >
+                        {platform}
+                      </a>
                     ))}
                   </div>
                 </div>

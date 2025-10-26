@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getSpeaker } from '@/lib/database'
 import { notFound } from 'next/navigation'
 import { 
@@ -55,8 +56,18 @@ export default async function SpeakerDetailPage({ params }: SpeakerDetailPagePro
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-8">
           <div className="flex items-start space-x-6">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-              <UserIcon className="h-10 w-10 text-blue-600" />
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+              {speaker.profile_photo_url ? (
+                <Image
+                  src={speaker.profile_photo_url}
+                  alt={speaker.name}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <UserIcon className="h-10 w-10 text-blue-600" />
+              )}
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900">{speaker.name}</h1>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import ImageUpload from './ImageUpload'
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -17,6 +18,7 @@ interface SpeakerFormData {
   name: string
   email: string
   bio: string
+  profile_photo_url: string
   expertise: string[]
   social_links: {
     linkedin: string
@@ -93,6 +95,7 @@ export default function SpeakerForm({ initialData, isEditing = false }: SpeakerF
     name: initialData?.name || '',
     email: initialData?.email || '',
     bio: initialData?.bio || '',
+    profile_photo_url: initialData?.profile_photo_url || '',
     expertise: initialData?.expertise || [],
     social_links: {
       linkedin: initialData?.social_links?.linkedin || '',
@@ -128,6 +131,13 @@ export default function SpeakerForm({ initialData, isEditing = false }: SpeakerF
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }))
+  }
+
+  const handlePhotoChange = (url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      profile_photo_url: url
     }))
   }
 
@@ -284,6 +294,17 @@ export default function SpeakerForm({ initialData, isEditing = false }: SpeakerF
               onChange={(e) => handleInputChange('bio', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
               placeholder="Tell us about yourself, your background, and speaking experience..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <ImageUpload
+              label="Profile Photo"
+              value={formData.profile_photo_url}
+              onChange={handlePhotoChange}
+              aspectRatio="square"
+              maxSize={5}
+              className="w-full"
             />
           </div>
         </div>

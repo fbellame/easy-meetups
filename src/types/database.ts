@@ -17,6 +17,8 @@ export interface Host {
   amenities?: string[];
   preferences?: Record<string, any>;
   profile_photo_url?: string;
+  bio?: string;
+  social_links?: Record<string, string>;
   created_at: string;
   updated_at: string;
 }

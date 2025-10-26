@@ -410,7 +410,7 @@ export async function getEventSpeakers(eventId: string) {
     // Then, get the speaker details
     const { data: speakers, error: speakersError } = await supabase
       .from('speakers')
-      .select('id, name, email, bio, expertise, profile_photo_url')
+      .select('id, name, email, bio, expertise, profile_photo_url, social_links')
       .in('id', speakerIds)
     
     if (speakersError) {

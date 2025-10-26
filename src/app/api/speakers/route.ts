@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       name: body.name,
       email: body.email,
       bio: body.bio || null,
+      profile_photo_url: body.profile_photo_url || null,
       expertise: body.expertise || [],
       social_links: body.social_links || {},
       availability: body.availability || {}
@@ -65,6 +66,7 @@ export async function PUT(request: NextRequest) {
       name: body.name,
       email: body.email,
       bio: body.bio || null,
+      profile_photo_url: body.profile_photo_url || null,
       expertise: body.expertise || [],
       social_links: body.social_links || {},
       availability: body.availability || {}

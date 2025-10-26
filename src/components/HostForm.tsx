@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import ImageUpload from './ImageUpload'
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -10,7 +11,8 @@ import {
   BuildingOfficeIcon,
   MapPinIcon,
   UsersIcon,
-  CheckIcon
+  CheckIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline'
 
 interface HostFormData {
@@ -22,6 +24,14 @@ interface HostFormData {
   venue_address: string
   capacity: string
   amenities: string[]
+  bio: string
+  profile_photo_url: string
+  social_links: {
+    linkedin: string
+    twitter: string
+    github: string
+    website: string
+  }
   preferences: {
     tech_stack: string
     event_types: string[]
@@ -80,6 +90,14 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
     venue_address: initialData?.venue_address || '',
     capacity: initialData?.capacity?.toString() || '',
     amenities: initialData?.amenities || [],
+    bio: initialData?.bio || '',
+    profile_photo_url: initialData?.profile_photo_url || '',
+    social_links: {
+      linkedin: initialData?.social_links?.linkedin || '',
+      twitter: initialData?.social_links?.twitter || '',
+      github: initialData?.social_links?.github || '',
+      website: initialData?.social_links?.website || ''
+    },
     preferences: {
       tech_stack: initialData?.preferences?.tech_stack || '',
       event_types: initialData?.preferences?.event_types || [],
@@ -142,6 +160,23 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
     }))
   }
 
+  const handlePhotoChange = (url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      profile_photo_url: url
+    }))
+  }
+
+  const handleSocialLinkChange = (platform: keyof HostFormData['social_links'], value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      social_links: {
+        ...prev.social_links,
+        [platform]: value
+      }
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -156,7 +191,8 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
           ...(isEditing && initialData ? { id: initialData.id } : {}),
           ...formData,
           capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
-          preferences: formData.preferences
+          preferences: formData.preferences,
+          social_links: formData.social_links
         }),
       })
 
@@ -271,6 +307,32 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
               placeholder="Enter company name"
             />
           </div>
+
+          <div className="md:col-span-2">
+            <label htmlFor="bio" className="block text-sm font-medium text-gray-800 mb-2">
+              <UserIcon className="h-4 w-4 inline mr-1" />
+              Bio
+            </label>
+            <textarea
+              id="bio"
+              rows={4}
+              value={formData.bio}
+              onChange={(e) => handleInputChange('bio', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="Tell us about yourself and your company..."
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <ImageUpload
+              label="Profile Photo"
+              value={formData.profile_photo_url}
+              onChange={handlePhotoChange}
+              aspectRatio="square"
+              maxSize={5}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
 
@@ -341,6 +403,72 @@ export default function HostForm({ initialData, isEditing = false }: HostFormPro
                   <span className="text-sm text-gray-800">{amenity}</span>
             </label>
           ))}
+        </div>
+      </div>
+
+      {/* Social Links */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-6">Social Links</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="linkedin" className="block text-sm font-medium text-gray-800 mb-2">
+              <LinkIcon className="h-4 w-4 inline mr-1" />
+              LinkedIn Profile
+            </label>
+            <input
+              type="url"
+              id="linkedin"
+              value={formData.social_links.linkedin}
+              onChange={(e) => handleSocialLinkChange('linkedin', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="https://linkedin.com/in/yourname"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="twitter" className="block text-sm font-medium text-gray-800 mb-2">
+              <LinkIcon className="h-4 w-4 inline mr-1" />
+              Twitter Profile
+            </label>
+            <input
+              type="url"
+              id="twitter"
+              value={formData.social_links.twitter}
+              onChange={(e) => handleSocialLinkChange('twitter', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="https://twitter.com/yourname"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="github" className="block text-sm font-medium text-gray-800 mb-2">
+              <LinkIcon className="h-4 w-4 inline mr-1" />
+              GitHub Profile
+            </label>
+            <input
+              type="url"
+              id="github"
+              value={formData.social_links.github}
+              onChange={(e) => handleSocialLinkChange('github', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="https://github.com/yourname"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="website" className="block text-sm font-medium text-gray-800 mb-2">
+              <LinkIcon className="h-4 w-4 inline mr-1" />
+              Company Website
+            </label>
+            <input
+              type="url"
+              id="website"
+              value={formData.social_links.website}
+              onChange={(e) => handleSocialLinkChange('website', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              placeholder="https://yourcompany.com"
+            />
+          </div>
         </div>
       </div>
 

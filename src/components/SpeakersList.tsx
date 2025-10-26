@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   MicrophoneIcon, 
   EnvelopeIcon, 
@@ -70,8 +71,18 @@ export default function SpeakersList({ speakers }: SpeakersListProps) {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <UserIcon className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                    {speaker.profile_photo_url ? (
+                      <Image
+                        src={speaker.profile_photo_url}
+                        alt={speaker.name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon className="h-6 w-6 text-blue-600" />
+                    )}
                   </div>
                   <div className="ml-3">
                     <h3 className="text-lg font-semibold text-gray-900">{speaker.name}</h3>

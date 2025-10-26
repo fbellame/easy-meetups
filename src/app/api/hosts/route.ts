@@ -24,7 +24,10 @@ export async function POST(request: NextRequest) {
       venue_address: body.venue_address || null,
       capacity: body.capacity || null,
       amenities: body.amenities || [],
-      preferences: body.preferences || {}
+      preferences: body.preferences || {},
+      profile_photo_url: body.profile_photo_url || null,
+      bio: body.bio || null,
+      social_links: body.social_links || {}
     }
 
     const host = await createHost(hostData)
@@ -60,7 +63,10 @@ export async function PUT(request: NextRequest) {
       venue_address: body.venue_address || null,
       capacity: body.capacity || null,
       amenities: body.amenities || [],
-      preferences: body.preferences || {}
+      preferences: body.preferences || {},
+      profile_photo_url: body.profile_photo_url || null,
+      bio: body.bio || null,
+      social_links: body.social_links || {}
     }
 
     const host = await updateHost(body.id, updateData)
