@@ -99,6 +99,7 @@ export interface CommunityMember {
   interests?: string[];
   join_date: string;
   last_active?: string;
+  last_attended?: string;
   meetup_user_id?: string;
   meetup_member_id?: string;
   title?: string;
