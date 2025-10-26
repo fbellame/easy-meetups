@@ -12,6 +12,8 @@ import {
 import { requireAuth } from '@/lib/auth'
 import { getEventWithDetails } from '@/lib/database'
 import type { EventWithDetails } from '@/types/database'
+import ResponsiveImage from '@/components/ResponsiveImage'
+import DescriptionDisplay from '@/components/DescriptionDisplay'
 
 const statusColors = {
   planned: 'bg-yellow-100 text-yellow-800',
@@ -37,9 +39,16 @@ export default async function EventPage({ params }: EventPageProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-gray-900">{event.title}</h1>
-          <p className="mt-2 text-gray-600">{event.description}</p>
+          {event.description && (
+            <div className="mt-3">
+              <DescriptionDisplay 
+                description={event.description}
+                maxLength={300}
+              />
+            </div>
+          )}
         </div>
         <div className="flex space-x-3">
           <Link
@@ -58,6 +67,45 @@ export default async function EventPage({ params }: EventPageProps) {
           {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
         </span>
       </div>
+
+      {/* Main Promotional Banner */}
+      {event.event_banner_url && (
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <ResponsiveImage
+            src={event.event_banner_url}
+            alt={`${event.title} promotional banner`}
+            aspectRatio="auto"
+            objectFit="contain"
+            className="w-full"
+            fallback={
+              <div className="w-full aspect-video bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-500 text-sm">Promotional banner not available</span>
+              </div>
+            }
+          />
+        </div>
+      )}
+
+      {/* Additional Event Images */}
+      {event.event_image_url && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Additional Event Images</h3>
+          <div className="space-y-2">
+            <ResponsiveImage
+              src={event.event_image_url}
+              alt={event.title}
+              aspectRatio="auto"
+              objectFit="contain"
+              className="rounded-lg border border-gray-200"
+              fallback={
+                <div className="w-full aspect-video bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                  <span className="text-gray-500 text-sm">Image not available</span>
+                </div>
+              }
+            />
+          </div>
+        </div>
+      )}
 
       {/* Event Details Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -134,11 +182,19 @@ export default async function EventPage({ params }: EventPageProps) {
                 {event.speakers.map((eventSpeaker, index) => (
                   <div key={eventSpeaker.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-medium text-sm">
-                          {index + 1}
-                        </span>
-                      </div>
+                      {eventSpeaker.speaker.profile_photo_url ? (
+                        <img
+                          src={eventSpeaker.speaker.profile_photo_url}
+                          alt={eventSpeaker.speaker.name}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-medium text-sm">
+                            {eventSpeaker.speaker.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">{eventSpeaker.speaker.name}</h4>
@@ -171,12 +227,28 @@ export default async function EventPage({ params }: EventPageProps) {
           {event.host && (
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Host</h3>
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">{event.host.name}</h4>
-                {event.host.company && (
-                  <p className="text-sm text-gray-600">{event.host.company}</p>
+              <div className="flex items-start space-x-3 mb-4">
+                {event.host.profile_photo_url ? (
+                  <img
+                    src={event.host.profile_photo_url}
+                    alt={event.host.name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-green-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-medium text-sm">
+                      {event.host.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
                 )}
-                <p className="text-sm text-gray-600">{event.host.email}</p>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{event.host.name}</h4>
+                  {event.host.company && (
+                    <p className="text-sm text-gray-600">{event.host.company}</p>
+                  )}
+                  <p className="text-sm text-gray-600">{event.host.email}</p>
+                </div>
+              </div>
                 {event.host.venue_name && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <p className="text-sm font-medium text-gray-900">Venue</p>

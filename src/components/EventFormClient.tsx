@@ -13,6 +13,8 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline'
 import type { Host, Speaker } from '@/types/database'
+import ImageUpload from './ImageUpload'
+import EnhancedTextarea from './EnhancedTextarea'
 
 interface EventFormData {
   title: string
@@ -30,6 +32,8 @@ interface EventFormData {
   luma_url: string
   linkedin_url: string
   selected_speakers: string[]
+  event_image_url: string
+  event_banner_url: string
 }
 
 interface EventFormClientProps {
@@ -67,7 +71,9 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
     meetup_url: initialData?.meetup_url || '',
     luma_url: initialData?.luma_url || '',
     linkedin_url: initialData?.linkedin_url || '',
-    selected_speakers: initialData?.selected_speakers || []
+    selected_speakers: initialData?.selected_speakers || [],
+    event_image_url: initialData?.event_image_url || '',
+    event_banner_url: initialData?.event_banner_url || ''
   })
 
   // Check authentication on component mount
@@ -204,16 +210,14 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
           </div>
 
           <div className="md:col-span-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-800 mb-2">
-              Event Description
-            </label>
-            <textarea
+            <EnhancedTextarea
               id="description"
-              rows={4}
+              label="Event Description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
-              placeholder="Enter event description"
+              onChange={(value) => handleInputChange('description', value)}
+              placeholder="Enter event description. You can include URLs which will be automatically detected and made clickable. Long descriptions are normal and supported."
+              minRows={8}
+              maxRows={25}
             />
           </div>
 
@@ -253,9 +257,36 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
         </div>
       </div>
 
+      {/* Event Images */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-6">Event Images</h3>
+        <p className="text-sm text-gray-600 mb-4">Add promotional images to make your event more engaging and professional.</p>
+        
+        <div className="space-y-6">
+          <ImageUpload
+            label="Main Promotional Poster/Banner"
+            value={formData.event_banner_url}
+            onChange={(url) => handleInputChange('event_banner_url', url)}
+            className="w-full"
+            aspectRatio="auto"
+          />
+          <p className="text-xs text-gray-500">Upload your complete promotional poster with text, logos, and speaker photos all in one image. The display area will automatically adjust to your image's dimensions.</p>
+          
+          <ImageUpload
+            label="Additional Event Image (Optional)"
+            value={formData.event_image_url}
+            onChange={(url) => handleInputChange('event_image_url', url)}
+            className="w-full"
+            aspectRatio="auto"
+          />
+          <p className="text-xs text-gray-500">Optional: Add a secondary image for the event (e.g., venue photo, additional graphics).</p>
+        </div>
+      </div>
+
       {/* Date and Time */}
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Date & Time</h3>
+        <p className="text-sm text-gray-600 mb-4">You can create events for any date, including past events for historical records.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="event_date" className="block text-sm font-medium text-gray-800 mb-2">
@@ -269,6 +300,7 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
               value={formData.event_date}
               onChange={(e) => handleInputChange('event_date', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              // Remove min attribute to allow past dates
             />
           </div>
 

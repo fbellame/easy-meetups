@@ -9,6 +9,8 @@ import {
   MicrophoneIcon
 } from '@heroicons/react/24/outline'
 import type { Event } from '@/types/database'
+import ResponsiveImage from './ResponsiveImage'
+import DescriptionDisplay from './DescriptionDisplay'
 
 const statusColors = {
   planned: 'bg-yellow-100 text-yellow-800',
@@ -24,9 +26,16 @@ interface EventsListProps {
 export default function EventsList({ events }: EventsListProps) {
   const [filter, setFilter] = useState('all')
 
-  const filteredEvents = events.filter(event => 
-    filter === 'all' || event.status === filter
-  )
+  const filteredEvents = events.filter(event => {
+    const eventDate = new Date(event.event_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset time to start of day for accurate comparison
+    
+    if (filter === 'all') return true
+    if (filter === 'past') return eventDate < today
+    if (filter === 'upcoming') return eventDate >= today
+    return event.status === filter
+  })
 
   return (
     <>
@@ -35,6 +44,8 @@ export default function EventsList({ events }: EventsListProps) {
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'all', label: 'All Events' },
+            { key: 'upcoming', label: 'Upcoming' },
+            { key: 'past', label: 'Past Events' },
             { key: 'planned', label: 'Planned' },
             { key: 'confirmed', label: 'Confirmed' },
             { key: 'completed', label: 'Completed' }
@@ -56,17 +67,45 @@ export default function EventsList({ events }: EventsListProps) {
 
       {/* Events Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredEvents.map((event) => (
-          <div key={event.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[event.status as keyof typeof statusColors]}`}>
-                  {event.status}
-                </span>
-              </div>
+        {filteredEvents.map((event) => {
+          const eventDate = new Date(event.event_date)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const isPastEvent = eventDate < today
+          
+          return (
+            <div key={event.id} className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow ${isPastEvent ? 'opacity-75' : ''}`}>
+              {/* Event Image - Prioritize banner, fallback to event image */}
+              {(event.event_banner_url || event.event_image_url) && (
+                <ResponsiveImage
+                  src={event.event_banner_url || event.event_image_url!}
+                  alt={event.title}
+                  aspectRatio="auto"
+                  objectFit="contain"
+                  className="rounded-t-lg"
+                />
+              )}
               
-              <p className="text-gray-600 text-sm mb-4">{event.description}</p>
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className={`text-lg font-semibold ${isPastEvent ? 'text-gray-600' : 'text-gray-900'}`}>
+                    {event.title}
+                    {isPastEvent && <span className="ml-2 text-xs text-gray-500">(Past)</span>}
+                  </h3>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[event.status as keyof typeof statusColors]}`}>
+                    {event.status}
+                  </span>
+                </div>
+              
+              {event.description && (
+                <div className="mb-4">
+                  <DescriptionDisplay 
+                    description={event.description}
+                    maxLength={150}
+                    className="text-sm"
+                  />
+                </div>
+              )}
               
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-sm text-gray-600">
@@ -99,7 +138,8 @@ export default function EventsList({ events }: EventsListProps) {
               </div>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {filteredEvents.length === 0 && (
@@ -109,6 +149,10 @@ export default function EventsList({ events }: EventsListProps) {
           <p className="mt-1 text-sm text-gray-500">
             {filter === 'all' 
               ? 'Get started by creating your first event.'
+              : filter === 'past'
+              ? 'No past events found.'
+              : filter === 'upcoming'
+              ? 'No upcoming events found.'
               : `No ${filter} events found.`
             }
           </p>

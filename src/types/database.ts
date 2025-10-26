@@ -1,3 +1,10 @@
+export interface SpeakerPhoto {
+  speaker_id: string;
+  speaker_name: string;
+  photo_url: string;
+  title?: string;
+}
+
 export interface Host {
   id: string;
   name: string;
@@ -9,6 +16,7 @@ export interface Host {
   capacity?: number;
   amenities?: string[];
   preferences?: Record<string, any>;
+  profile_photo_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +29,7 @@ export interface Speaker {
   expertise?: string[];
   social_links?: Record<string, string>;
   availability?: Record<string, any>;
+  profile_photo_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +64,9 @@ export interface Event {
   meetup_url?: string;
   luma_url?: string;
   linkedin_url?: string;
+  event_image_url?: string;
+  event_banner_url?: string;
+  speaker_photos?: SpeakerPhoto[];
   created_at: string;
   updated_at: string;
 }
