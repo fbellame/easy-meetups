@@ -407,11 +407,21 @@ export async function getEventSpeakers(eventId: string) {
       throw error
     }
     
-    // Ensure proper data formatting
-    const formattedData = (data || []).map(item => ({
-      ...item,
-      created_at: item.created_at ? new Date(item.created_at).toISOString() : item.created_at
-    }))
+    // Debug: Log what we're getting
+    console.log(`getEventSpeakers for event ${eventId}:`, data)
+    
+    // Ensure proper data formatting and validate speaker data
+    const formattedData = (data || []).map(item => {
+      // Check if speaker data is properly joined
+      if (!item.speakers) {
+        console.warn(`Event speaker ${item.id} has no speaker data joined`)
+      }
+      
+      return {
+        ...item,
+        created_at: item.created_at ? new Date(item.created_at).toISOString() : item.created_at
+      }
+    })
     
     return formattedData
   } catch (error) {

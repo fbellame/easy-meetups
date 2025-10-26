@@ -68,6 +68,9 @@ export default async function EventPage({ params }: EventPageProps) {
     notFound()
   }
 
+  // Debug: Log the speakers data
+  console.log('Event speakers in page:', event.speakers)
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -203,9 +206,9 @@ export default async function EventPage({ params }: EventPageProps) {
           )}
 
           {/* Speakers */}
-          {event.speakers && event.speakers.length > 0 && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Speakers</h3>
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Speakers</h3>
+            {event.speakers && event.speakers.length > 0 ? (
               <div className="space-y-4">
                 {event.speakers.map((eventSpeaker, index) => (
                   <div key={eventSpeaker.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
@@ -245,8 +248,13 @@ export default async function EventPage({ params }: EventPageProps) {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No speakers assigned to this event.</p>
+                <p className="text-sm text-gray-400 mt-2">Edit the event to assign speakers.</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Sidebar */}
