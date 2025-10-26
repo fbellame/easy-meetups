@@ -2,40 +2,134 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { PlusIcon, UserGroupIcon, ChartBarIcon, CalendarDaysIcon, MicrophoneIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, UserGroupIcon, ChartBarIcon, CalendarDaysIcon, MicrophoneIcon, BuildingOfficeIcon, UsersIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import CommunityList from './CommunityList'
 import QuickAddMemberForm from './QuickAddMemberForm'
 import type { CommunityMember } from '@/types/database'
 
 interface CommunityPageClientProps {
   members: CommunityMember[]
+  user: any
 }
 
-export default function CommunityPageClient({ members }: CommunityPageClientProps) {
+export default function CommunityPageClient({ members, user }: CommunityPageClientProps) {
   const [showQuickAddForm, setShowQuickAddForm] = useState(false)
+  const [showImportForm, setShowImportForm] = useState(false)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{success: boolean, message: string} | null>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && (
+      file.type === 'text/csv' || 
+      file.type === 'text/tab-separated-values' ||
+      file.name.endsWith('.csv') ||
+      file.name.endsWith('.tsv') ||
+      file.name.endsWith('.xls') ||
+      file.name.endsWith('.xlsx')
+    )) {
+      setImportFile(file)
+      setImportResult(null)
+    } else {
+      setImportResult({ success: false, message: 'Please select a valid CSV, TSV, or Excel file' })
+    }
+  }
+
+  const handleImport = async () => {
+    if (!importFile) {
+      setImportResult({ success: false, message: 'Please select a file first' })
+      return
+    }
+
+    setIsImporting(true)
+    setImportResult(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', importFile)
+
+      const response = await fetch('/api/community-members/import-csv', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setImportResult({ 
+          success: true, 
+          message: `Successfully imported ${result.imported} members!` 
+        })
+        setImportFile(null)
+        // Refresh the page to show new members
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      } else {
+        setImportResult({ 
+          success: false, 
+          message: result.error || 'Import failed' 
+        })
+      }
+    } catch (error) {
+      setImportResult({ 
+        success: false, 
+        message: 'Network error. Please try again.' 
+      })
+    } finally {
+      setIsImporting(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Community</h1>
-          <p className="mt-2 text-gray-600">Manage your community members and engagement</p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setShowQuickAddForm(true)}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Quick Add
-          </button>
-          <Link
-            href="/community/new"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Member
-          </Link>
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-8 rounded-xl border border-blue-200">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0">
+              <div className="bg-blue-600 p-3 rounded-xl shadow-lg">
+                <UsersIcon className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900">Community Members</h1>
+              <p className="mt-2 text-lg text-gray-600">Manage your GenAI Montreal community members and engagement</p>
+              {!user && (
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-yellow-800 text-sm">
+                    <strong>Note:</strong> You're not signed in. Some features may be limited. 
+                    <a href="/auth/login" className="ml-1 text-blue-600 hover:text-blue-800 underline">
+                      Sign in here
+                    </a>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowImportForm(true)}
+              className="inline-flex items-center px-4 py-2 border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
+            >
+              <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
+              Import CSV
+            </button>
+            <button
+              onClick={() => setShowQuickAddForm(true)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Quick Add
+            </button>
+            <Link
+              href="/community/new"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Member
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -96,58 +190,82 @@ export default function CommunityPageClient({ members }: CommunityPageClientProp
         </div>
       </div>
 
-      {/* Quick Add Everything Loop - Multiple Add Buttons */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Add Everything</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button
-            onClick={() => setShowQuickAddForm(true)}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group"
-          >
-            <div className="text-center">
-              <UserGroupIcon className="h-8 w-8 text-gray-400 group-hover:text-blue-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-blue-600">Add Member</p>
-            </div>
-          </button>
-          
-          <Link
-            href="/speakers/new"
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors group"
-          >
-            <div className="text-center">
-              <MicrophoneIcon className="h-8 w-8 text-gray-400 group-hover:text-green-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-green-600">Add Speaker</p>
-            </div>
-          </Link>
-          
-          <Link
-            href="/hosts/new"
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors group"
-          >
-            <div className="text-center">
-              <BuildingOfficeIcon className="h-8 w-8 text-gray-400 group-hover:text-purple-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-purple-600">Add Host</p>
-            </div>
-          </Link>
-          
-          <Link
-            href="/events/new"
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors group"
-          >
-            <div className="text-center">
-              <CalendarDaysIcon className="h-8 w-8 text-gray-400 group-hover:text-orange-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600 group-hover:text-orange-600">Create Event</p>
-            </div>
-          </Link>
-        </div>
-        <p className="text-sm text-gray-500 mt-3 text-center">Click any button above to quickly add new content</p>
-      </div>
 
       <CommunityList members={members} />
 
       {/* Quick Add Member Modal */}
       {showQuickAddForm && (
         <QuickAddMemberForm onClose={() => setShowQuickAddForm(false)} />
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportForm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Import Community Members from CSV</h3>
+              
+              {importResult && (
+                <div className={`mb-4 p-3 rounded-md ${
+                  importResult.success 
+                    ? 'bg-green-50 border border-green-200 text-green-800' 
+                    : 'bg-red-50 border border-red-200 text-red-800'
+                }`}>
+                  <p className="text-sm">{importResult.message}</p>
+                </div>
+              )}
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv,.xls,.xlsx,.tsv"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {importFile && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Selected: {importFile.name}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Supports CSV, TSV, and Excel files. Will automatically detect columns like Name, User ID, Location, Meetup URL, etc.
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  <a 
+                    href="/sample-community-members.csv" 
+                    download 
+                    className="hover:underline"
+                  >
+                    Download sample CSV file
+                  </a>
+                </p>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowImportForm(false)
+                    setImportFile(null)
+                    setImportResult(null)
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                  disabled={isImporting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImport}
+                  disabled={!importFile || isImporting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isImporting ? 'Importing...' : 'Import'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

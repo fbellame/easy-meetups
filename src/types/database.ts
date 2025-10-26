@@ -89,9 +89,28 @@ export interface CommunityMember {
   email: string;
   phone?: string;
   company?: string;
+  city?: string;
+  meetup_url?: string;
+  bio?: string;
+  linkedin_url?: string;
+  twitter_url?: string;
+  github_url?: string;
+  website_url?: string;
   interests?: string[];
   join_date: string;
   last_active?: string;
+  meetup_user_id?: string;
+  meetup_member_id?: string;
+  title?: string;
+  total_responses?: number;
+  responded_yes?: number;
+  responded_maybe?: number;
+  responded_no?: number;
+  meetups_attended?: number;
+  absences?: number;
+  has_photo?: boolean;
+  is_assistant_organizer?: boolean;
+  is_on_mailing_list?: boolean;
   created_at: string;
   updated_at: string;
 }

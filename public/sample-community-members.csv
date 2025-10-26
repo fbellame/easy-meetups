@@ -1,0 +1,4 @@
+Name,Email,Phone,Company,City,Meetup URL,Bio,LinkedIn,Twitter,GitHub,Website,Interests
+John Doe,john.doe@example.com,+1-555-0123,TechCorp,Montreal,https://www.meetup.com/members/123456789,Software engineer passionate about AI and machine learning,https://linkedin.com/in/johndoe,https://twitter.com/johndoe,https://github.com/johndoe,https://johndoe.dev,"AI, Machine Learning, Python"
+Jane Smith,jane.smith@example.com,+1-555-0124,DataFlow Inc,Toronto,https://www.meetup.com/members/987654321,Data scientist with expertise in deep learning and NLP,https://linkedin.com/in/janesmith,https://twitter.com/janesmith,https://github.com/janesmith,https://janesmith.com,"Data Science, Deep Learning, NLP"
+Mike Johnson,mike.johnson@example.com,+1-555-0125,StartupXYZ,Vancouver,https://www.meetup.com/members/456789123,Full-stack developer and startup founder,https://linkedin.com/in/mikejohnson,,https://github.com/mikejohnson,https://mikejohnson.io,"React, Node.js, Entrepreneurship"

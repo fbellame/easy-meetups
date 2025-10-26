@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { UserGroupIcon, BuildingOfficeIcon, PhoneIcon, EnvelopeIcon, TagIcon } from '@heroicons/react/24/outline'
+import { UserGroupIcon, BuildingOfficeIcon, PhoneIcon, EnvelopeIcon, TagIcon, LinkIcon } from '@heroicons/react/24/outline'
 
 interface CommunityMemberFormProps {
   initialData?: {
@@ -11,6 +11,13 @@ interface CommunityMemberFormProps {
     email?: string
     phone?: string
     company?: string
+    city?: string
+    meetup_url?: string
+    bio?: string
+    linkedin_url?: string
+    twitter_url?: string
+    github_url?: string
+    website_url?: string
     interests?: string[]
   }
   isEditing?: boolean
@@ -24,6 +31,13 @@ export default function CommunityMemberForm({ initialData, isEditing = false }: 
     email: initialData?.email || '',
     phone: initialData?.phone || '',
     company: initialData?.company || '',
+    city: initialData?.city || '',
+    meetup_url: initialData?.meetup_url || '',
+    bio: initialData?.bio || '',
+    linkedin_url: initialData?.linkedin_url || '',
+    twitter_url: initialData?.twitter_url || '',
+    github_url: initialData?.github_url || '',
+    website_url: initialData?.website_url || '',
     interests: initialData?.interests || []
   })
   const [newInterest, setNewInterest] = useState('')
@@ -197,6 +211,110 @@ export default function CommunityMemberForm({ initialData, isEditing = false }: 
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter company name (optional)"
             />
+          </div>
+
+          {/* City Field */}
+          <div>
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+              <BuildingOfficeIcon className="h-4 w-4 inline mr-1" />
+              City
+            </label>
+            <input
+              type="text"
+              id="city"
+              value={formData.city}
+              onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter city (optional)"
+            />
+          </div>
+
+          {/* Bio Field */}
+          <div>
+            <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
+              <UserGroupIcon className="h-4 w-4 inline mr-1" />
+              Bio
+            </label>
+            <textarea
+              id="bio"
+              rows={3}
+              value={formData.bio}
+              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Tell us about yourself (optional)"
+            />
+          </div>
+
+          {/* Meetup URL Field */}
+          <div>
+            <label htmlFor="meetup_url" className="block text-sm font-medium text-gray-700 mb-2">
+              <LinkIcon className="h-4 w-4 inline mr-1" />
+              Meetup Profile URL
+            </label>
+            <input
+              type="url"
+              id="meetup_url"
+              value={formData.meetup_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, meetup_url: e.target.value }))}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="https://www.meetup.com/members/..."
+            />
+          </div>
+
+          {/* Social Links */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="linkedin_url" className="block text-sm font-medium text-gray-700 mb-2">
+                LinkedIn URL
+              </label>
+              <input
+                type="url"
+                id="linkedin_url"
+                value={formData.linkedin_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, linkedin_url: e.target.value }))}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://linkedin.com/in/..."
+              />
+            </div>
+            <div>
+              <label htmlFor="twitter_url" className="block text-sm font-medium text-gray-700 mb-2">
+                Twitter URL
+              </label>
+              <input
+                type="url"
+                id="twitter_url"
+                value={formData.twitter_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, twitter_url: e.target.value }))}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://twitter.com/..."
+              />
+            </div>
+            <div>
+              <label htmlFor="github_url" className="block text-sm font-medium text-gray-700 mb-2">
+                GitHub URL
+              </label>
+              <input
+                type="url"
+                id="github_url"
+                value={formData.github_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, github_url: e.target.value }))}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://github.com/..."
+              />
+            </div>
+            <div>
+              <label htmlFor="website_url" className="block text-sm font-medium text-gray-700 mb-2">
+                Website URL
+              </label>
+              <input
+                type="url"
+                id="website_url"
+                value={formData.website_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://yourwebsite.com"
+              />
+            </div>
           </div>
 
           {/* Interests Field */}
