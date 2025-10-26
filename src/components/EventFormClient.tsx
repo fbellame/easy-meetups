@@ -10,7 +10,8 @@ import {
   MicrophoneIcon,
   ClockIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline'
 import type { Host, Speaker } from '@/types/database'
 import ImageUpload from './ImageUpload'
@@ -28,6 +29,7 @@ interface EventFormData {
   max_capacity: string
   registration_deadline: string
   status: 'planned' | 'confirmed' | 'cancelled' | 'completed'
+  host_email: string
   meetup_url: string
   luma_url: string
   linkedin_url: string
@@ -68,6 +70,7 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
     max_capacity: initialData?.max_capacity?.toString() || '',
     registration_deadline: initialData?.registration_deadline || '',
     status: initialData?.status || 'planned',
+    host_email: initialData?.host_email || '',
     meetup_url: initialData?.meetup_url || '',
     luma_url: initialData?.luma_url || '',
     linkedin_url: initialData?.linkedin_url || '',
@@ -94,10 +97,25 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
   }, [])
 
   const handleInputChange = (field: keyof EventFormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      }
+      
+      // Auto-populate venue information when host is selected
+      if (field === 'host_id' && value) {
+        const selectedHost = hosts.find(host => host.id === value)
+        if (selectedHost) {
+          newData.venue_name = selectedHost.venue_name || ''
+          newData.venue_address = selectedHost.venue_address || ''
+          newData.max_capacity = selectedHost.capacity ? selectedHost.capacity.toString() : ''
+          newData.host_email = selectedHost.email || ''
+        }
+      }
+      
+      return newData
+    })
   }
 
   const handleSpeakerToggle = (speakerId: string) => {
@@ -216,8 +234,7 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
               value={formData.description}
               onChange={(value) => handleInputChange('description', value)}
               placeholder="Enter event description. You can include URLs which will be automatically detected and made clickable. Long descriptions are normal and supported."
-              minRows={8}
-              maxRows={25}
+              minRows={15}
             />
           </div>
 
@@ -243,6 +260,9 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
             <label htmlFor="max_capacity" className="block text-sm font-medium text-gray-800 mb-2">
               <UserGroupIcon className="h-4 w-4 inline mr-1" />
               Maximum Capacity
+              {formData.host_id && (
+                <span className="ml-2 text-xs text-blue-600 font-normal">(from host venue)</span>
+              )}
             </label>
             <input
               type="number"
@@ -250,8 +270,11 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
               min="1"
               value={formData.max_capacity}
               onChange={(e) => handleInputChange('max_capacity', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900 ${
+                formData.host_id ? 'bg-gray-50 border-gray-300' : 'border-gray-300'
+              }`}
               placeholder="Enter maximum capacity"
+              readOnly={!!formData.host_id}
             />
           </div>
         </div>
@@ -373,11 +396,45 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
             <p className="mt-2 text-sm text-gray-500">No hosts available. <a href="/hosts/new" className="text-blue-600 hover:text-blue-800">Add a host first</a>.</p>
           )}
         </div>
+
+        {/* Host Email - Auto-populated when host is selected */}
+        {formData.host_id && (
+          <div className="mt-4">
+            <label htmlFor="host_email" className="block text-sm font-medium text-gray-800 mb-2">
+              <EnvelopeIcon className="h-4 w-4 inline mr-1" />
+              Host Email
+              <span className="ml-2 text-xs text-blue-600 font-normal">(from selected host)</span>
+            </label>
+            <input
+              type="email"
+              id="host_email"
+              value={formData.host_email}
+              onChange={(e) => handleInputChange('host_email', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900 bg-gray-50"
+              placeholder="Host email address"
+              readOnly={!!formData.host_id}
+            />
+          </div>
+        )}
       </div>
 
       {/* Venue Information */}
       <div className="bg-white shadow rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Venue Information</h3>
+        {formData.host_id ? (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-800">
+              <strong>Auto-populated from selected host.</strong> Venue information, capacity, and host email are automatically filled from the host's details.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
+            <p className="text-sm text-gray-600">
+              Select a host above to automatically populate venue information, capacity, and host email, or enter manually below.
+            </p>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="venue_name" className="block text-sm font-medium text-gray-800 mb-2">
@@ -389,8 +446,11 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
               id="venue_name"
               value={formData.venue_name}
               onChange={(e) => handleInputChange('venue_name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900 ${
+                formData.host_id ? 'bg-gray-50 border-gray-300' : 'border-gray-300'
+              }`}
               placeholder="Enter venue name"
+              readOnly={!!formData.host_id}
             />
           </div>
 
@@ -404,8 +464,11 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
               rows={3}
               value={formData.venue_address}
               onChange={(e) => handleInputChange('venue_address', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900 ${
+                formData.host_id ? 'bg-gray-50 border-gray-300' : 'border-gray-300'
+              }`}
               placeholder="Enter full venue address"
+              readOnly={!!formData.host_id}
             />
           </div>
         </div>

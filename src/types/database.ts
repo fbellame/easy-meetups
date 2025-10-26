@@ -53,6 +53,7 @@ export interface Event {
   title: string;
   description?: string;
   host_id?: string;
+  host_email?: string;
   venue_name?: string;
   venue_address?: string;
   event_date: string;

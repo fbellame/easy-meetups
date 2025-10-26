@@ -1,8 +1,3 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { 
   CalendarDaysIcon, 
   UserGroupIcon, 
@@ -12,68 +7,63 @@ import {
   BuildingOfficeIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/auth'
 
-export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setUser(session.user)
-      } else {
-        router.push('/auth/login')
-      }
-      setLoading(false)
-    }
-    
-    checkUser()
-  }, [router])
-
-  if (loading) {
+export default async function Dashboard() {
+  const user = await getUser()
+  
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="text-gray-600">Please log in to view the dashboard</p>
         </div>
       </div>
     )
   }
 
-  if (!user) {
-    return null // Will redirect to login
-  }
+  const supabase = await createClient()
 
-  // Mock data for now since we're client-side
+  // Fetch real data from database
+  const [eventsResult, hostsResult, speakersResult] = await Promise.all([
+    supabase.from('events').select('*').order('created_at', { ascending: false }),
+    supabase.from('hosts').select('*'),
+    supabase.from('speakers').select('*')
+  ])
+
+  const events = eventsResult.data || []
+  const hosts = hostsResult.data || []
+  const speakers = speakersResult.data || []
+
+  // Calculate real stats
   const statsData = {
-    totalEvents: 12,
-    totalHosts: 8,
-    totalSpeakers: 24,
-    totalMembers: 156
+    totalEvents: events.length,
+    totalHosts: hosts.length,
+    totalSpeakers: speakers.length,
+    totalMembers: 0 // We don't have a members table yet
   }
-  
-  const events: any[] = []
 
   const stats = [
-    { name: 'Upcoming Events', value: statsData.totalEvents.toString(), icon: CalendarDaysIcon, href: '/events' },
+    { name: 'All Events', value: statsData.totalEvents.toString(), icon: CalendarDaysIcon, href: '/events' },
     { name: 'Active Hosts', value: statsData.totalHosts.toString(), icon: UserGroupIcon, href: '/hosts' },
     { name: 'Speakers', value: statsData.totalSpeakers.toString(), icon: MicrophoneIcon, href: '/speakers' },
     { name: 'Community Members', value: statsData.totalMembers.toString(), icon: UserGroupIcon, href: '/community' },
   ]
 
-  // Get recent events (last 3)
-  const recentEvents = events.slice(0, 3).map(event => ({
-    id: event.id,
-    title: event.title,
-    date: event.event_date,
-    host: 'TBD', // You'll need to join with hosts table
-    speakers: 0, // You'll need to join with speakers table
-    registrations: 0, // You'll need to join with registrations table
-    status: event.status
-  }))
+  // Get recent events (last 3) with host information
+  const recentEvents = events.slice(0, 3).map((event: any) => {
+    const host = hosts.find((h: any) => h.id === event.host_id)
+    return {
+      id: event.id,
+      title: event.title,
+      date: event.event_date,
+      host: host?.name || 'TBD',
+      speakers: 0, // We'll need to join with event_speakers table for this
+      registrations: 0, // We don't have registrations table yet
+      status: event.status
+    }
+  })
 
   return (
     <div className="space-y-8">
@@ -117,29 +107,49 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="divide-y">
-          {recentEvents.map((event) => (
-            <div key={event.id} className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-gray-900">{event.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    {new Date(event.date).toLocaleDateString()} • {event.host}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>{event.speakers} speakers</span>
-                  <span>{event.registrations} registrations</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    event.status === 'confirmed' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {event.status}
-                  </span>
+          {recentEvents.length > 0 ? (
+            recentEvents.map((event: any) => (
+              <div key={event.id} className="px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-gray-900">{event.title}</h3>
+                    <p className="text-sm text-gray-600">
+                      {new Date(event.date).toLocaleDateString()} • {event.host}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <span>{event.speakers} speakers</span>
+                    <span>{event.registrations} registrations</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      event.status === 'confirmed' 
+                        ? 'bg-green-100 text-green-800'
+                        : event.status === 'completed'
+                        ? 'bg-blue-100 text-blue-800'
+                        : event.status === 'cancelled'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {event.status}
+                    </span>
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="px-6 py-8 text-center">
+              <CalendarDaysIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No events yet</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by creating your first event.</p>
+              <div className="mt-6">
+                <Link
+                  href="/events/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Create Event
+                </Link>
+              </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
