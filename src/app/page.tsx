@@ -183,54 +183,56 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+
+      {/* Add Everything Loop - Multiple Add Buttons */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Add Everything</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
-            href="/events/new"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            href="/community/new"
+            className="flex items-center justify-center p-6 border-2 border-dashed border-blue-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group"
           >
-            <CalendarDaysIcon className="h-6 w-6 text-blue-600 mr-3" />
-            <div>
-              <h3 className="font-medium text-gray-900">Create Event</h3>
-              <p className="text-sm text-gray-600">Plan a new meetup</p>
-            </div>
-          </Link>
-          
-          <Link
-            href="/hosts/new"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <BuildingOfficeIcon className="h-6 w-6 text-blue-600 mr-3" />
-            <div>
-              <h3 className="font-medium text-gray-900">Add Host</h3>
-              <p className="text-sm text-gray-600">Register a new host</p>
+            <div className="text-center">
+              <UserGroupIcon className="h-8 w-8 text-blue-400 group-hover:text-blue-600 mx-auto mb-2" />
+              <h3 className="font-medium text-gray-900 group-hover:text-blue-600">Add Member</h3>
+              <p className="text-sm text-gray-600">Community</p>
             </div>
           </Link>
           
           <Link
             href="/speakers/new"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center p-6 border-2 border-dashed border-green-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors group"
           >
-            <MicrophoneIcon className="h-6 w-6 text-blue-600 mr-3" />
-            <div>
-              <h3 className="font-medium text-gray-900">Add Speaker</h3>
-              <p className="text-sm text-gray-600">Register a new speaker</p>
+            <div className="text-center">
+              <MicrophoneIcon className="h-8 w-8 text-green-400 group-hover:text-green-600 mx-auto mb-2" />
+              <h3 className="font-medium text-gray-900 group-hover:text-green-600">Add Speaker</h3>
+              <p className="text-sm text-gray-600">Expert</p>
             </div>
           </Link>
           
           <Link
-            href="/announcements/new"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            href="/hosts/new"
+            className="flex items-center justify-center p-6 border-2 border-dashed border-purple-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors group"
           >
-            <MegaphoneIcon className="h-6 w-6 text-blue-600 mr-3" />
-            <div>
-              <h3 className="font-medium text-gray-900">Create Announcement</h3>
-              <p className="text-sm text-gray-600">Send updates to community</p>
+            <div className="text-center">
+              <BuildingOfficeIcon className="h-8 w-8 text-purple-400 group-hover:text-purple-600 mx-auto mb-2" />
+              <h3 className="font-medium text-gray-900 group-hover:text-purple-600">Add Host</h3>
+              <p className="text-sm text-gray-600">Venue</p>
+            </div>
+          </Link>
+          
+          <Link
+            href="/events/new"
+            className="flex items-center justify-center p-6 border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors group"
+          >
+            <div className="text-center">
+              <CalendarDaysIcon className="h-8 w-8 text-orange-400 group-hover:text-orange-600 mx-auto mb-2" />
+              <h3 className="font-medium text-gray-900 group-hover:text-orange-600">Create Event</h3>
+              <p className="text-sm text-gray-600">Meetup</p>
             </div>
           </Link>
         </div>
+        <p className="text-sm text-gray-500 mt-4 text-center">Click any button above to quickly add new content</p>
       </div>
     </div>
   )

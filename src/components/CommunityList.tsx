@@ -7,6 +7,7 @@ import {
   BuildingOfficeIcon
 } from '@heroicons/react/24/outline'
 import type { CommunityMember } from '@/types/database'
+import DeleteCommunityMemberButton from './DeleteCommunityMemberButton'
 
 interface CommunityListProps {
   members: CommunityMember[]
@@ -141,6 +142,7 @@ export default function CommunityList({ members }: CommunityListProps) {
                       >
                         Edit
                       </Link>
+                      <DeleteCommunityMemberButton memberId={member.id} memberName={member.name} />
                     </div>
                   </td>
                 </tr>
