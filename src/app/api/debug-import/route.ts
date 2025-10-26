@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('=== DEBUG IMPORT START ===')
     
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get the uploaded file
     const formData = await request.formData()

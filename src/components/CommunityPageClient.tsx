@@ -17,7 +17,7 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
   const [showImportForm, setShowImportForm] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
-  const [importResult, setImportResult] = useState<{success: boolean, message: string} | null>(null)
+  const [importResult, setImportResult] = useState<{success: boolean, message: string, isAuthError?: boolean} | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -49,7 +49,7 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
       const formData = new FormData()
       formData.append('file', importFile)
 
-      const response = await fetch('/api/community-members/import-csv', {
+      const response = await fetch('/api/community-members/import-test', {
         method: 'POST',
         body: formData,
       })
@@ -66,6 +66,12 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
         setTimeout(() => {
           window.location.reload()
         }, 2000)
+      } else if (response.status === 401) {
+        setImportResult({ 
+          success: false, 
+          message: 'Please sign in to import CSV files. Click here to sign in.',
+          isAuthError: true
+        })
       } else {
         setImportResult({ 
           success: false, 
@@ -211,7 +217,15 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
                     ? 'bg-green-50 border border-green-200 text-green-800' 
                     : 'bg-red-50 border border-red-200 text-red-800'
                 }`}>
-                  <p className="text-sm">{importResult.message}</p>
+                  <p className="text-sm">
+                    {importResult.isAuthError ? (
+                      <a href="/auth/login" className="underline hover:no-underline">
+                        {importResult.message}
+                      </a>
+                    ) : (
+                      importResult.message
+                    )}
+                  </p>
                 </div>
               )}
               

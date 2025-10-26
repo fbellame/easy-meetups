@@ -26,6 +26,16 @@ export async function requireAuth() {
   return user
 }
 
+export async function requireAuthForAPI() {
+  const user = await getUser()
+  
+  if (!user) {
+    throw new Error('Authentication required')
+  }
+  
+  return user
+}
+
 export async function getSession() {
   const supabase = await createClient()
   
