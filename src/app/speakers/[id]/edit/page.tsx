@@ -3,15 +3,17 @@ import SpeakerForm from '@/components/SpeakerForm'
 import { notFound } from 'next/navigation'
 
 interface EditSpeakerPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditSpeakerPage({ params }: EditSpeakerPageProps) {
+  // Await the params Promise
+  const { id } = await params
 
   // Fetch speaker data
-  const speaker = await getSpeaker(params.id)
+  const speaker = await getSpeaker(id)
 
   if (!speaker) {
     notFound()

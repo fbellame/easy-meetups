@@ -1,3 +1,8 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { 
   CalendarDaysIcon, 
   UserGroupIcon, 
@@ -7,41 +12,80 @@ import {
   BuildingOfficeIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { getUser } from '@/lib/auth'
 
-export default async function Dashboard() {
-  const user = await getUser()
-  
-  if (!user) {
+export default function Dashboard() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [statsData, setStatsData] = useState({
+    totalEvents: 0,
+    totalHosts: 0,
+    totalSpeakers: 0,
+    totalMembers: 0
+  })
+  const [recentEvents, setRecentEvents] = useState<any[]>([])
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkUserAndFetchData = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setUser(session.user)
+        
+        // Fetch real data from database
+        const [eventsResult, hostsResult, speakersResult] = await Promise.all([
+          supabase.from('events').select('*').order('created_at', { ascending: false }),
+          supabase.from('hosts').select('*'),
+          supabase.from('speakers').select('*')
+        ])
+
+        const events = eventsResult.data || []
+        const hosts = hostsResult.data || []
+        const speakers = speakersResult.data || []
+
+        // Calculate real stats
+        setStatsData({
+          totalEvents: events.length,
+          totalHosts: hosts.length,
+          totalSpeakers: speakers.length,
+          totalMembers: 0 // We don't have a members table yet
+        })
+
+        // Get recent events (last 3) with host information
+        const recentEventsData = events.slice(0, 3).map((event: any) => {
+          const host = hosts.find((h: any) => h.id === event.host_id)
+          return {
+            id: event.id,
+            title: event.title,
+            date: event.event_date,
+            host: host?.name || 'TBD',
+            speakers: 0, // We'll need to join with event_speakers table for this
+            registrations: 0, // We don't have registrations table yet
+            status: event.status
+          }
+        })
+        setRecentEvents(recentEventsData)
+      } else {
+        router.push('/auth/login')
+      }
+      setLoading(false)
+    }
+    
+    checkUserAndFetchData()
+  }, [router])
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Please log in to view the dashboard</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     )
   }
 
-  const supabase = await createClient()
-
-  // Fetch real data from database
-  const [eventsResult, hostsResult, speakersResult] = await Promise.all([
-    supabase.from('events').select('*').order('created_at', { ascending: false }),
-    supabase.from('hosts').select('*'),
-    supabase.from('speakers').select('*')
-  ])
-
-  const events = eventsResult.data || []
-  const hosts = hostsResult.data || []
-  const speakers = speakersResult.data || []
-
-  // Calculate real stats
-  const statsData = {
-    totalEvents: events.length,
-    totalHosts: hosts.length,
-    totalSpeakers: speakers.length,
-    totalMembers: 0 // We don't have a members table yet
+  if (!user) {
+    return null // Will redirect to login
   }
 
   const stats = [
@@ -50,20 +94,6 @@ export default async function Dashboard() {
     { name: 'Speakers', value: statsData.totalSpeakers.toString(), icon: MicrophoneIcon, href: '/speakers' },
     { name: 'Community Members', value: statsData.totalMembers.toString(), icon: UserGroupIcon, href: '/community' },
   ]
-
-  // Get recent events (last 3) with host information
-  const recentEvents = events.slice(0, 3).map((event: any) => {
-    const host = hosts.find((h: any) => h.id === event.host_id)
-    return {
-      id: event.id,
-      title: event.title,
-      date: event.event_date,
-      host: host?.name || 'TBD',
-      speakers: 0, // We'll need to join with event_speakers table for this
-      registrations: 0, // We don't have registrations table yet
-      status: event.status
-    }
-  })
 
   return (
     <div className="space-y-8">

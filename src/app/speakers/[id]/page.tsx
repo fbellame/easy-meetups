@@ -13,15 +13,17 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface SpeakerDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function SpeakerDetailPage({ params }: SpeakerDetailPageProps) {
+  // Await the params Promise
+  const { id } = await params
 
   // Fetch speaker data
-  const speaker = await getSpeaker(params.id)
+  const speaker = await getSpeaker(id)
 
   if (!speaker) {
     notFound()

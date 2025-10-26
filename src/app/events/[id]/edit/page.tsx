@@ -3,20 +3,29 @@ import { getEvent, getEventSpeakers } from '@/lib/database'
 import EventFormServer from '@/components/EventFormServer'
 
 interface EditEventPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditEventPage({ params }: EditEventPageProps) {
-  const event = await getEvent(params.id)
+  // Await the params Promise
+  const { id } = await params
+  
+  // Validate id before making the database call
+  if (!id || id === 'undefined' || id === 'null') {
+    console.error('Invalid event ID in params:', id)
+    notFound()
+  }
+
+  const event = await getEvent(id)
   
   if (!event) {
     notFound()
   }
 
   // Get selected speakers for this event
-  const eventSpeakers = await getEventSpeakers(params.id)
+  const eventSpeakers = await getEventSpeakers(id)
   const selectedSpeakerIds = eventSpeakers.map(es => es.speaker_id)
 
   // Convert event data to form format

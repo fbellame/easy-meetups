@@ -27,22 +27,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the event
+    // Helper function to convert empty strings to undefined
+    const undefinedIfEmpty = (value: any) => {
+      if (value === '' || value === undefined) return undefined
+      return value
+    }
+
+    // Helper function to parse date/time strings properly
+    const parseDateTime = (dateStr: string | null): string | undefined => {
+      if (!dateStr || dateStr === '') return undefined
+      // If it's already a valid ISO string, return as is
+      if (dateStr.includes('T') || dateStr.includes('Z')) return dateStr
+      // If it's just a date, convert to ISO string
+      return new Date(dateStr).toISOString()
+    }
+
+    // Helper function to parse required date/time strings
+    const parseRequiredDateTime = (dateStr: string | null): string => {
+      if (!dateStr || dateStr === '') throw new Error('Date is required')
+      // If it's already a valid ISO string, return as is
+      if (dateStr.includes('T') || dateStr.includes('Z')) return dateStr
+      // If it's just a date, convert to ISO string
+      return new Date(dateStr).toISOString()
+    }
+
+    // Create the event with proper data validation
     const eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> = {
       title: body.title,
-      description: body.description || null,
-      host_id: body.host_id || null,
-      venue_name: body.venue_name || null,
-      venue_address: body.venue_address || null,
-      event_date: body.event_date,
-      start_time: body.start_time || null,
-      end_time: body.end_time || null,
-      max_capacity: body.max_capacity || null,
-      registration_deadline: body.registration_deadline || null,
+      description: undefinedIfEmpty(body.description),
+      host_id: undefinedIfEmpty(body.host_id),
+      venue_name: undefinedIfEmpty(body.venue_name),
+      venue_address: undefinedIfEmpty(body.venue_address),
+      event_date: parseRequiredDateTime(body.event_date),
+      start_time: undefinedIfEmpty(body.start_time),
+      end_time: undefinedIfEmpty(body.end_time),
+      max_capacity: body.max_capacity ? parseInt(body.max_capacity) : undefined,
+      registration_deadline: parseDateTime(body.registration_deadline),
       status: body.status || 'planned',
-      meetup_url: body.meetup_url || null,
-      luma_url: body.luma_url || null,
-      linkedin_url: body.linkedin_url || null
+      meetup_url: undefinedIfEmpty(body.meetup_url),
+      luma_url: undefinedIfEmpty(body.luma_url),
+      linkedin_url: undefinedIfEmpty(body.linkedin_url),
+      event_image_url: undefinedIfEmpty(body.event_image_url),
+      event_banner_url: undefinedIfEmpty(body.event_banner_url),
+      host_email: undefinedIfEmpty(body.host_email)
     }
 
     const event = await createEvent(eventData)
@@ -67,22 +94,49 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Update the event
+    // Helper function to convert empty strings to undefined
+    const undefinedIfEmpty = (value: any) => {
+      if (value === '' || value === undefined) return undefined
+      return value
+    }
+
+    // Helper function to parse date/time strings properly
+    const parseDateTime = (dateStr: string | null): string | undefined => {
+      if (!dateStr || dateStr === '') return undefined
+      // If it's already a valid ISO string, return as is
+      if (dateStr.includes('T') || dateStr.includes('Z')) return dateStr
+      // If it's just a date, convert to ISO string
+      return new Date(dateStr).toISOString()
+    }
+
+    // Helper function to parse required date/time strings
+    const parseRequiredDateTime = (dateStr: string | null): string => {
+      if (!dateStr || dateStr === '') throw new Error('Date is required')
+      // If it's already a valid ISO string, return as is
+      if (dateStr.includes('T') || dateStr.includes('Z')) return dateStr
+      // If it's just a date, convert to ISO string
+      return new Date(dateStr).toISOString()
+    }
+
+    // Update the event with proper data validation
     const updateData: Partial<Event> = {
       title: body.title,
-      description: body.description,
-      host_id: body.host_id,
-      venue_name: body.venue_name,
-      venue_address: body.venue_address,
-      event_date: body.event_date,
-      start_time: body.start_time,
-      end_time: body.end_time,
-      max_capacity: body.max_capacity,
-      registration_deadline: body.registration_deadline,
-      status: body.status,
-      meetup_url: body.meetup_url,
-      luma_url: body.luma_url,
-      linkedin_url: body.linkedin_url
+      description: undefinedIfEmpty(body.description),
+      host_id: undefinedIfEmpty(body.host_id),
+      venue_name: undefinedIfEmpty(body.venue_name),
+      venue_address: undefinedIfEmpty(body.venue_address),
+      event_date: parseRequiredDateTime(body.event_date),
+      start_time: undefinedIfEmpty(body.start_time),
+      end_time: undefinedIfEmpty(body.end_time),
+      max_capacity: body.max_capacity ? parseInt(body.max_capacity) : undefined,
+      registration_deadline: parseDateTime(body.registration_deadline),
+      status: body.status || 'planned',
+      meetup_url: undefinedIfEmpty(body.meetup_url),
+      luma_url: undefinedIfEmpty(body.luma_url),
+      linkedin_url: undefinedIfEmpty(body.linkedin_url),
+      event_image_url: undefinedIfEmpty(body.event_image_url),
+      event_banner_url: undefinedIfEmpty(body.event_banner_url),
+      host_email: undefinedIfEmpty(body.host_email)
     }
 
     // Remove undefined values

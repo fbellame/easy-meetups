@@ -132,17 +132,35 @@ export default function EventFormClient({ initialData, isEditing = false, hosts,
     setIsSubmitting(true)
 
     try {
+      // Prepare the data with proper validation
+      const submitData = {
+        ...(isEditing && initialData ? { id: initialData.id } : {}),
+        title: formData.title,
+        description: formData.description || '',
+        host_id: formData.host_id || '',
+        venue_name: formData.venue_name || '',
+        venue_address: formData.venue_address || '',
+        event_date: formData.event_date,
+        start_time: formData.start_time || '',
+        end_time: formData.end_time || '',
+        max_capacity: formData.max_capacity || '',
+        registration_deadline: formData.registration_deadline || '',
+        status: formData.status,
+        meetup_url: formData.meetup_url || '',
+        luma_url: formData.luma_url || '',
+        linkedin_url: formData.linkedin_url || '',
+        event_image_url: formData.event_image_url || '',
+        event_banner_url: formData.event_banner_url || '',
+        host_email: formData.host_email || '',
+        // Note: selected_speakers will be handled separately via event_speakers table
+      }
+
       const response = await fetch('/api/events', {
         method: isEditing ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...(isEditing && initialData ? { id: initialData.id } : {}),
-          ...formData,
-          max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : undefined,
-          host_id: formData.host_id || undefined,
-        }),
+        body: JSON.stringify(submitData),
       })
 
       if (!response.ok) {

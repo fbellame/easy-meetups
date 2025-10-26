@@ -43,9 +43,17 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
   )
 
-  // Temporarily disable server-side auth checks to prevent loop
-  // Let client-side handle authentication
-  console.log('Middleware: Skipping auth checks to prevent loop')
+  // Only redirect to login if user is not authenticated and trying to access protected route
+  if (isProtectedRoute && !user && !error) {
+    console.log('Middleware: Redirecting to login for protected route')
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+
+  console.log('Middleware: Auth check completed', { 
+    isProtectedRoute, 
+    hasUser: !!user, 
+    pathname: request.nextUrl.pathname 
+  })
 
   return supabaseResponse
 }

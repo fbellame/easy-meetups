@@ -15,6 +15,29 @@ import type { EventWithDetails } from '@/types/database'
 import ResponsiveImage from '@/components/ResponsiveImage'
 import DescriptionDisplay from '@/components/DescriptionDisplay'
 
+// Utility functions for consistent date formatting across server and client
+const formatEventDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
+}
+
+const formatDateTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })
+}
+
 const statusColors = {
   planned: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-green-100 text-green-800',
@@ -23,13 +46,22 @@ const statusColors = {
 }
 
 interface EventPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EventPage({ params }: EventPageProps) {
-  const event = await getEventWithDetails(params.id)
+  // Await the params Promise
+  const { id } = await params
+  
+  // Validate id before making the database call
+  if (!id || id === 'undefined' || id === 'null') {
+    console.error('Invalid event ID in params:', id)
+    notFound()
+  }
+
+  const event = await getEventWithDetails(id)
   
   if (!event) {
     notFound()
@@ -117,12 +149,7 @@ export default async function EventPage({ params }: EventPageProps) {
             <div className="space-y-3">
               <div className="flex items-center text-gray-600">
                 <CalendarDaysIcon className="h-5 w-5 mr-3" />
-                <span>{new Date(event.event_date).toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}</span>
+                <span>{formatEventDate(event.event_date)}</span>
               </div>
               {event.start_time && (
                 <div className="flex items-center text-gray-600">
@@ -136,7 +163,7 @@ export default async function EventPage({ params }: EventPageProps) {
               {event.registration_deadline && (
                 <div className="flex items-center text-gray-600">
                   <ClockIcon className="h-5 w-5 mr-3" />
-                  <span>Registration deadline: {new Date(event.registration_deadline).toLocaleString()}</span>
+                  <span>Registration deadline: {formatDateTime(event.registration_deadline)}</span>
                 </div>
               )}
             </div>
@@ -249,19 +276,18 @@ export default async function EventPage({ params }: EventPageProps) {
                   <p className="text-sm text-gray-600">{event.host.email}</p>
                 </div>
               </div>
-                {event.host.venue_name && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-sm font-medium text-gray-900">Venue</p>
-                    <p className="text-sm text-gray-600">{event.host.venue_name}</p>
-                    {event.host.venue_address && (
-                      <p className="text-sm text-gray-600">{event.host.venue_address}</p>
-                    )}
-                    {event.host.capacity && (
-                      <p className="text-sm text-gray-600">Capacity: {event.host.capacity}</p>
-                    )}
-                  </div>
-                )}
-              </div>
+              {event.host.venue_name && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-sm font-medium text-gray-900">Venue</p>
+                  <p className="text-sm text-gray-600">{event.host.venue_name}</p>
+                  {event.host.venue_address && (
+                    <p className="text-sm text-gray-600">{event.host.venue_address}</p>
+                  )}
+                  {event.host.capacity && (
+                    <p className="text-sm text-gray-600">Capacity: {event.host.capacity}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

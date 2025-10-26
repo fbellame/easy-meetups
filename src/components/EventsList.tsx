@@ -12,6 +12,16 @@ import type { Event } from '@/types/database'
 import ResponsiveImage from './ResponsiveImage'
 import DescriptionDisplay from './DescriptionDisplay'
 
+// Utility function for consistent date formatting across server and client
+const formatEventDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+}
+
 const statusColors = {
   planned: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-green-100 text-green-800',
@@ -110,7 +120,7 @@ export default function EventsList({ events }: EventsListProps) {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-sm text-gray-600">
                   <CalendarDaysIcon className="h-4 w-4 mr-2" />
-                  {new Date(event.event_date).toLocaleDateString()} at {event.start_time}
+                  {formatEventDate(event.event_date)} at {event.start_time}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <MapPinIcon className="h-4 w-4 mr-2" />

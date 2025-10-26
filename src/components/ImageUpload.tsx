@@ -56,6 +56,9 @@ export default function ImageUpload({
     setError('')
 
     try {
+      // Store the old value to delete it later if upload succeeds
+      const oldValue = value
+
       // Upload to our API route
       const uploadFormData = new FormData()
       uploadFormData.append('file', file)
@@ -74,6 +77,21 @@ export default function ImageUpload({
       onChange(result.url)
       setIsUploading(false)
       
+      // Delete the old image if it exists and is from Supabase storage
+      if (oldValue && oldValue.includes('supabase') && oldValue !== result.url) {
+        try {
+          await fetch('/api/upload', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: oldValue })
+          })
+        } catch (deleteError) {
+          console.warn('Failed to delete old image:', deleteError)
+        }
+      }
+      
       // Clear the file input so the same file can be uploaded again
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -89,7 +107,22 @@ export default function ImageUpload({
     }
   }
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
+    // Delete the image from storage if it's a Supabase URL
+    if (value && value.includes('supabase')) {
+      try {
+        await fetch('/api/upload', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: value })
+        })
+      } catch (deleteError) {
+        console.warn('Failed to delete image from storage:', deleteError)
+      }
+    }
+
     if (onRemove) {
       onRemove()
     } else {

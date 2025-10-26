@@ -19,8 +19,19 @@ export async function getHosts(): Promise<Host[]> {
       .select('*')
       .order('created_at', { ascending: false })
     
-    if (error) throw error
-    return data || []
+    if (error) {
+      console.error('Error fetching hosts:', error)
+      throw error
+    }
+    
+    // Ensure proper date formatting for React Server Components
+    const formattedData = (data || []).map(host => ({
+      ...host,
+      created_at: host.created_at ? new Date(host.created_at).toISOString() : host.created_at,
+      updated_at: host.updated_at ? new Date(host.updated_at).toISOString() : host.updated_at
+    }))
+    
+    return formattedData
   } catch (error) {
     console.error('Database connection error:', error)
     // Return empty array if database is not connected
@@ -82,14 +93,30 @@ export async function deleteHost(id: string): Promise<void> {
 
 // Speakers
 export async function getSpeakers(): Promise<Speaker[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('speakers')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data || []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('speakers')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching speakers:', error)
+      throw error
+    }
+    
+    // Ensure proper date formatting for React Server Components
+    const formattedData = (data || []).map(speaker => ({
+      ...speaker,
+      created_at: speaker.created_at ? new Date(speaker.created_at).toISOString() : speaker.created_at,
+      updated_at: speaker.updated_at ? new Date(speaker.updated_at).toISOString() : speaker.updated_at
+    }))
+    
+    return formattedData
+  } catch (error) {
+    console.error('Database connection error:', error)
+    return []
+  }
 }
 
 export async function getSpeaker(id: string): Promise<Speaker | null> {
@@ -148,8 +175,21 @@ export async function getEvents(): Promise<Event[]> {
       .select('*')
       .order('event_date', { ascending: false })
     
-    if (error) throw error
-    return data || []
+    if (error) {
+      console.error('Error fetching events:', error)
+      throw error
+    }
+    
+    // Ensure proper date formatting for React Server Components
+    const formattedData = (data || []).map(event => ({
+      ...event,
+      event_date: event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : event.event_date,
+      registration_deadline: event.registration_deadline ? new Date(event.registration_deadline).toISOString() : event.registration_deadline,
+      created_at: event.created_at ? new Date(event.created_at).toISOString() : event.created_at,
+      updated_at: event.updated_at ? new Date(event.updated_at).toISOString() : event.updated_at
+    }))
+    
+    return formattedData
   } catch (error) {
     console.error('Database connection error:', error)
     // Return empty array if database is not connected
@@ -158,15 +198,35 @@ export async function getEvents(): Promise<Event[]> {
 }
 
 export async function getEvent(id: string): Promise<Event | null> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
-  if (error) throw error
-  return data
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching event:', error)
+      throw error
+    }
+    
+    if (!data) return null
+    
+    // Ensure proper date formatting for React Server Components
+    const formattedData = {
+      ...data,
+      event_date: data.event_date ? new Date(data.event_date).toISOString().split('T')[0] : data.event_date,
+      registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : data.registration_deadline,
+      created_at: data.created_at ? new Date(data.created_at).toISOString() : data.created_at,
+      updated_at: data.updated_at ? new Date(data.updated_at).toISOString() : data.updated_at
+    }
+    
+    return formattedData
+  } catch (error) {
+    console.error('Database connection error:', error)
+    return null
+  }
 }
 
 export async function createEvent(event: Omit<Event, 'id' | 'created_at' | 'updated_at'>): Promise<Event> {
@@ -341,8 +401,18 @@ export async function getEventSpeakers(eventId: string) {
       .eq('event_id', eventId)
       .order('speaking_order')
     
-    if (error) throw error
-    return data || []
+    if (error) {
+      console.error('Error fetching event speakers:', error)
+      throw error
+    }
+    
+    // Ensure proper data formatting
+    const formattedData = (data || []).map(item => ({
+      ...item,
+      created_at: item.created_at ? new Date(item.created_at).toISOString() : item.created_at
+    }))
+    
+    return formattedData
   } catch (error) {
     console.error('Database connection error:', error)
     return []
@@ -376,6 +446,12 @@ export async function createEventSpeakers(eventId: string, speakerIds: string[])
 
 export async function getEventWithDetails(id: string): Promise<EventWithDetails | null> {
   try {
+    // Validate the ID parameter
+    if (!id || id === 'undefined' || id === 'null') {
+      console.error('Invalid event ID provided:', id)
+      return null
+    }
+
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('events')
@@ -394,14 +470,26 @@ export async function getEventWithDetails(id: string): Promise<EventWithDetails 
       .eq('id', id)
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('Error fetching event with details:', error)
+      throw error
+    }
     if (!data) return null
 
     // Get speakers for this event
     const speakers = await getEventSpeakers(id)
     
-    return {
+    // Ensure proper date formatting for React Server Components
+    const formattedData = {
       ...data,
+      event_date: data.event_date ? new Date(data.event_date).toISOString().split('T')[0] : data.event_date,
+      registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : data.registration_deadline,
+      created_at: data.created_at ? new Date(data.created_at).toISOString() : data.created_at,
+      updated_at: data.updated_at ? new Date(data.updated_at).toISOString() : data.updated_at
+    }
+    
+    return {
+      ...formattedData,
       speakers
     }
   } catch (error) {
