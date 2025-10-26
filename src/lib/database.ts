@@ -395,7 +395,8 @@ export async function getEventSpeakers(eventId: string) {
           name,
           email,
           bio,
-          expertise
+          expertise,
+          profile_photo_url
         )
       `)
       .eq('event_id', eventId)

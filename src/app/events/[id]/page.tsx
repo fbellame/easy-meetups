@@ -14,6 +14,7 @@ import { getEventWithDetails } from '@/lib/database'
 import type { EventWithDetails } from '@/types/database'
 import ResponsiveImage from '@/components/ResponsiveImage'
 import DescriptionDisplay from '@/components/DescriptionDisplay'
+import DeleteEventButton from '@/components/DeleteEventButton'
 
 // Utility functions for consistent date formatting across server and client
 const formatEventDate = (dateString: string): string => {
@@ -209,24 +210,24 @@ export default async function EventPage({ params }: EventPageProps) {
                 {event.speakers.map((eventSpeaker, index) => (
                   <div key={eventSpeaker.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
                     <div className="flex-shrink-0">
-                      {eventSpeaker.speaker.profile_photo_url ? (
+                      {eventSpeaker.speaker?.profile_photo_url ? (
                         <img
                           src={eventSpeaker.speaker.profile_photo_url}
-                          alt={eventSpeaker.speaker.name}
+                          alt={eventSpeaker.speaker.name || 'Speaker'}
                           className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
                         />
                       ) : (
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 font-medium text-sm">
-                            {eventSpeaker.speaker.name.charAt(0).toUpperCase()}
+                            {eventSpeaker.speaker?.name?.charAt(0).toUpperCase() || 'S'}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{eventSpeaker.speaker.name}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{eventSpeaker.speaker.bio}</p>
-                      {eventSpeaker.speaker.expertise && eventSpeaker.speaker.expertise.length > 0 && (
+                      <h4 className="font-medium text-gray-900">{eventSpeaker.speaker?.name || 'Unknown Speaker'}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{eventSpeaker.speaker?.bio || 'No bio available'}</p>
+                      {eventSpeaker.speaker?.expertise && eventSpeaker.speaker.expertise.length > 0 && (
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-1">
                             {eventSpeaker.speaker.expertise.map((skill) => (
@@ -340,17 +341,7 @@ export default async function EventPage({ params }: EventPageProps) {
               >
                 Edit Event
               </Link>
-              <button
-                className="block w-full text-center px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 transition-colors"
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete this event?')) {
-                    // TODO: Implement delete functionality
-                    console.log('Delete event:', event.id)
-                  }
-                }}
-              >
-                Delete Event
-              </button>
+              <DeleteEventButton eventId={event.id} />
             </div>
           </div>
         </div>

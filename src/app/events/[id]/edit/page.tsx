@@ -45,6 +45,9 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     meetup_url: event.meetup_url || '',
     luma_url: event.luma_url || '',
     linkedin_url: event.linkedin_url || '',
+    event_image_url: event.event_image_url || '',
+    event_banner_url: event.event_banner_url || '',
+    host_email: event.host_email || '',
     selected_speakers: selectedSpeakerIds
   }
 
