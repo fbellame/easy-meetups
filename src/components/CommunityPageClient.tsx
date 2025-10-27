@@ -10,9 +10,12 @@ import type { CommunityMember } from '@/types/database'
 interface CommunityPageClientProps {
   members: CommunityMember[]
   user: any
+  currentPage: number
+  totalPages: number
+  totalCount: number
 }
 
-export default function CommunityPageClient({ members, user }: CommunityPageClientProps) {
+export default function CommunityPageClient({ members, user, currentPage, totalPages, totalCount }: CommunityPageClientProps) {
   const [showQuickAddForm, setShowQuickAddForm] = useState(false)
   const [showImportForm, setShowImportForm] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -148,7 +151,7 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Members</p>
-              <p className="text-2xl font-semibold text-gray-900">{members.length}</p>
+              <p className="text-2xl font-semibold text-gray-900">{totalCount}</p>
             </div>
           </div>
         </div>
@@ -160,7 +163,7 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Active Members</p>
-              <p className="text-2xl font-semibold text-gray-900">{members.length}</p>
+              <p className="text-2xl font-semibold text-gray-900">{totalCount}</p>
             </div>
           </div>
         </div>
@@ -197,7 +200,12 @@ export default function CommunityPageClient({ members, user }: CommunityPageClie
       </div>
 
 
-      <CommunityList members={members} />
+      <CommunityList 
+        members={members} 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
+      />
 
       {/* Quick Add Member Modal */}
       {showQuickAddForm && (
