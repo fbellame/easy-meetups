@@ -62,19 +62,28 @@ export default function Dashboard() {
           totalMembers: members.length
         })
 
-        // Get recent events (last 3) with host information
-        const recentEventsData = events.slice(0, 3).map((event: any) => {
-          const host = hosts.find((h: any) => h.id === event.host_id)
-          return {
-            id: event.id,
-            title: event.title,
-            date: event.event_date,
-            host: host?.name || 'TBD',
-            speakers: 0, // We'll need to join with event_speakers table for this
-            registrations: 0, // We don't have registrations table yet
-            status: event.status
-          }
-        })
+        // Get recent events (last 3) with host information and speaker counts
+        const recentEventsData = await Promise.all(
+          events.slice(0, 3).map(async (event: any) => {
+            const host = hosts.find((h: any) => h.id === event.host_id)
+            
+            // Get speaker count for this event
+            const { count: speakerCount } = await supabase
+              .from('event_speakers')
+              .select('*', { count: 'exact', head: true })
+              .eq('event_id', event.id)
+            
+            return {
+              id: event.id,
+              title: event.title,
+              date: event.event_date,
+              host: host?.name || 'TBD',
+              speakers: speakerCount || 0,
+              registrations: 0, // We don't have registrations table yet
+              status: event.status
+            }
+          })
+        )
         setRecentEvents(recentEventsData)
       } else {
         router.push('/auth/login')
