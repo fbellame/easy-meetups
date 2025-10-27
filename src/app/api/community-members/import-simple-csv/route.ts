@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         const website_url = columnIndices.website_url !== undefined ? values[columnIndices.website_url] || null : null
         
         // Parse interests
-        let interests = []
+        let interests: string[] = []
         if (columnIndices.interests !== undefined) {
           const interestsStr = values[columnIndices.interests] || ''
           if (interestsStr.trim()) {
