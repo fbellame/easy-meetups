@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     await requireAuth()
     console.log('Authentication passed')
     
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get the uploaded file
     const formData = await request.formData()
