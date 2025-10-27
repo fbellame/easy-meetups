@@ -281,7 +281,7 @@ export async function getCommunityMembers(limit: number = 100, offset: number = 
   // This can be extended when we add a status field to the schema
   
   query = query
-    .order('created_at', { ascending: false })
+    .order('name', { ascending: true })
     .range(offset, offset + limit - 1)
   
   const { data, error } = await query
