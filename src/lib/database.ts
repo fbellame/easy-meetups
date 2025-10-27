@@ -265,23 +265,47 @@ export async function deleteEvent(id: string): Promise<void> {
 }
 
 // Community Members
-export async function getCommunityMembers(limit: number = 100, offset: number = 0): Promise<CommunityMember[]> {
+export async function getCommunityMembers(limit: number = 100, offset: number = 0, searchTerm?: string, filterStatus?: string): Promise<CommunityMember[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase
+  
+  let query = supabase
     .from('community_members')
     .select('*')
+  
+  // Apply search filter if provided
+  if (searchTerm) {
+    query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`)
+  }
+  
+  // Apply status filter if provided (for now, we'll just return all since we don't have a status field)
+  // This can be extended when we add a status field to the schema
+  
+  query = query
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
+  
+  const { data, error } = await query
   
   if (error) throw error
   return data || []
 }
 
-export async function getCommunityMembersCount(): Promise<number> {
+export async function getCommunityMembersCount(searchTerm?: string, filterStatus?: string): Promise<number> {
   const supabase = await createClient()
-  const { count, error } = await supabase
+  
+  let query = supabase
     .from('community_members')
     .select('*', { count: 'exact', head: true })
+  
+  // Apply search filter if provided
+  if (searchTerm) {
+    query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company.ilike.%${searchTerm}%`)
+  }
+  
+  // Apply status filter if provided (for now, we'll just return all since we don't have a status field)
+  // This can be extended when we add a status field to the schema
+  
+  const { count, error } = await query
   
   if (error) throw error
   return count || 0

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { 
   UserGroupIcon, 
   BuildingOfficeIcon,
@@ -17,48 +17,69 @@ interface CommunityListProps {
   currentPage: number
   totalPages: number
   totalCount: number
+  searchTerm?: string
+  filterStatus?: string
 }
 
-export default function CommunityList({ members, currentPage, totalPages, totalCount }: CommunityListProps) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
+export default function CommunityList({ members, currentPage, totalPages, totalCount, searchTerm = '', filterStatus = 'all' }: CommunityListProps) {
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm)
+  const [localFilterStatus, setLocalFilterStatus] = useState(filterStatus)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (member.company && member.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (member.interests && member.interests.some(interest => interest.toLowerCase().includes(searchTerm.toLowerCase())))
-    
-    // For now, we'll consider all members as active since we don't have a status field in the schema
-    const matchesStatus = filterStatus === 'all' || filterStatus === 'active'
-    
-    return matchesSearch && matchesStatus
-  })
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const params = new URLSearchParams(searchParams.toString())
+    if (localSearchTerm) {
+      params.set('search', localSearchTerm)
+    } else {
+      params.delete('search')
+    }
+    params.set('page', '1') // Reset to first page when searching
+    router.push(`/community?${params.toString()}`)
+  }
+
+  const handleFilterChange = (newFilterStatus: string) => {
+    setLocalFilterStatus(newFilterStatus)
+    const params = new URLSearchParams(searchParams.toString())
+    if (newFilterStatus !== 'all') {
+      params.set('status', newFilterStatus)
+    } else {
+      params.delete('status')
+    }
+    params.set('page', '1') // Reset to first page when filtering
+    router.push(`/community?${params.toString()}`)
+  }
+
+  // For now, we'll just display the members as they come from the server
+  // The filtering and searching will be handled server-side
+  const displayMembers = members
 
   return (
     <>
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <UserGroupIcon className="h-5 w-5 text-gray-400" />
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <UserGroupIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search members..."
+                value={localSearchTerm}
+                onChange={(e) => setLocalSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search members..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          </form>
         </div>
         
         <div className="sm:w-48">
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            value={localFilterStatus}
+            onChange={(e) => handleFilterChange(e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Members</option>
@@ -100,7 +121,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMembers.map((member) => (
+              {displayMembers.map((member) => (
                 <tr key={member.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -181,10 +202,10 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(member.join_date).toLocaleDateString()}
+                    {new Date(member.join_date).toLocaleDateString('en-US')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {member.last_attended ? new Date(member.last_attended).toLocaleDateString() : 'Never'}
+                    {member.last_attended ? new Date(member.last_attended).toLocaleDateString('en-US') : 'Never'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
@@ -215,7 +236,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
           <div className="flex-1 flex justify-between sm:hidden">
             <Link
-              href={currentPage > 1 ? `/community?page=${currentPage - 1}` : '#'}
+              href={currentPage > 1 ? `/community?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: (currentPage - 1).toString()}).toString()}` : '#'}
               className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
                 currentPage > 1
                   ? 'text-gray-700 bg-white hover:bg-gray-50'
@@ -225,7 +246,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
               Previous
             </Link>
             <Link
-              href={currentPage < totalPages ? `/community?page=${currentPage + 1}` : '#'}
+              href={currentPage < totalPages ? `/community?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: (currentPage + 1).toString()}).toString()}` : '#'}
               className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
                 currentPage < totalPages
                   ? 'text-gray-700 bg-white hover:bg-gray-50'
@@ -252,7 +273,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
             <div>
               <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 <Link
-                  href={currentPage > 1 ? `/community?page=${currentPage - 1}` : '#'}
+                  href={currentPage > 1 ? `/community?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: (currentPage - 1).toString()}).toString()}` : '#'}
                   className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
                     currentPage > 1
                       ? 'text-gray-500 hover:bg-gray-50'
@@ -279,7 +300,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
                   return (
                     <Link
                       key={pageNum}
-                      href={`/community?page=${pageNum}`}
+                      href={`/community?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: pageNum.toString()}).toString()}`}
                       className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                         pageNum === currentPage
                           ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
@@ -292,7 +313,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
                 })}
                 
                 <Link
-                  href={currentPage < totalPages ? `/community?page=${currentPage + 1}` : '#'}
+                  href={currentPage < totalPages ? `/community?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: (currentPage + 1).toString()}).toString()}` : '#'}
                   className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
                     currentPage < totalPages
                       ? 'text-gray-500 hover:bg-gray-50'
@@ -308,7 +329,7 @@ export default function CommunityList({ members, currentPage, totalPages, totalC
         </div>
       )}
 
-      {filteredMembers.length === 0 && (
+      {displayMembers.length === 0 && (
         <div className="text-center py-12">
           <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No members found</h3>

@@ -93,10 +93,7 @@ export async function POST(request: NextRequest) {
       'meetups participated': 'meetups_attended',
       'title': 'title',
       'meetup user id': 'meetup_user_id',
-      'meetup member id': 'meetup_member_id',
-      'has photo': 'has_photo',
-      'assistant organizer': 'is_assistant_organizer',
-      'on mailing list': 'is_on_mailing_list'
+      'meetup member id': 'meetup_member_id'
     }
     
     // Find column indices
@@ -123,8 +120,8 @@ export async function POST(request: NextRequest) {
     }
     
     // Parse data rows
-    const members = []
-    const errors = []
+    const members: any[] = []
+    const errors: string[] = []
     
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i]
@@ -153,19 +150,56 @@ export async function POST(request: NextRequest) {
           email = `${cleanName}${i}@meetup-member.local`
         }
         
-        // Extract all available fields
-        const phone = columnIndices.phone !== undefined ? values[columnIndices.phone] || null : null
-        const company = columnIndices.company !== undefined ? values[columnIndices.company] || null : null
-        const city = columnIndices.city !== undefined ? values[columnIndices.city] || null : null
-        const meetup_url = columnIndices.meetup_url !== undefined ? values[columnIndices.meetup_url] || null : null
-        const bio = columnIndices.bio !== undefined ? values[columnIndices.bio] || null : null
-        const linkedin_url = columnIndices.linkedin_url !== undefined ? values[columnIndices.linkedin_url] || null : null
-        const twitter_url = columnIndices.twitter_url !== undefined ? values[columnIndices.twitter_url] || null : null
-        const github_url = columnIndices.github_url !== undefined ? values[columnIndices.github_url] || null : null
-        const website_url = columnIndices.website_url !== undefined ? values[columnIndices.website_url] || null : null
+        // Ensure email is unique by adding timestamp if needed
+        const baseEmail = email
+        let uniqueEmail = baseEmail
+        let emailCounter = 1
+        while (members.some(m => m.email === uniqueEmail)) {
+          uniqueEmail = `${baseEmail.split('@')[0]}_${emailCounter}@${baseEmail.split('@')[1]}`
+          emailCounter++
+        }
+        email = uniqueEmail
+        
+        // Extract all available fields with proper handling
+        let phone = null
+        if (columnIndices.phone !== undefined) {
+          const phoneValue = values[columnIndices.phone] || ''
+          // Handle boolean values in phone field (like "False")
+          if (phoneValue.toLowerCase() === 'false' || phoneValue.toLowerCase() === 'true') {
+            phone = null
+          } else if (phoneValue.trim()) {
+            phone = phoneValue.trim()
+          }
+        }
+        
+        const company = columnIndices.company !== undefined ? (values[columnIndices.company] || '').trim() || null : null
+        const city = columnIndices.city !== undefined ? (values[columnIndices.city] || '').trim() || null : null
+        const meetup_url = columnIndices.meetup_url !== undefined ? (values[columnIndices.meetup_url] || '').trim() || null : null
+        const bio = columnIndices.bio !== undefined ? (values[columnIndices.bio] || '').trim() || null : null
+        
+        // Handle LinkedIn URLs - prepend https://linkedin.com if it's just a path
+        let linkedin_url = null
+        if (columnIndices.linkedin_url !== undefined) {
+          const linkedinValue = (values[columnIndices.linkedin_url] || '').trim()
+          if (linkedinValue) {
+            if (linkedinValue.startsWith('/in/')) {
+              linkedin_url = `https://linkedin.com${linkedinValue}`
+            } else if (linkedinValue.startsWith('http')) {
+              linkedin_url = linkedinValue
+            } else if (linkedinValue.startsWith('linkedin.com')) {
+              linkedin_url = `https://${linkedinValue}`
+            } else {
+              linkedin_url = linkedinValue
+            }
+          }
+        }
+        
+        const twitter_url = columnIndices.twitter_url !== undefined ? (values[columnIndices.twitter_url] || '').trim() || null : null
+        const github_url = columnIndices.github_url !== undefined ? (values[columnIndices.github_url] || '').trim() || null : null
+        const website_url = columnIndices.website_url !== undefined ? (values[columnIndices.website_url] || '').trim() || null : null
         
         // Parse interests
-        let interests = []
+        let interests: string[] = []
         if (columnIndices.interests !== undefined) {
           const interestsStr = values[columnIndices.interests] || ''
           if (interestsStr.trim()) {
@@ -173,8 +207,8 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        // Parse join date
-        let join_date = new Date().toISOString()
+        // Parse join date - allow empty/null
+        let join_date = null
         if (columnIndices.join_date !== undefined) {
           const joinDateStr = values[columnIndices.join_date]
           if (joinDateStr && joinDateStr.trim()) {
@@ -185,16 +219,20 @@ export async function POST(request: NextRequest) {
                 join_date = date.toISOString()
                 console.log('Successfully parsed join date:', join_date)
               } else {
-                console.log('Failed to parse join date, using current date')
+                console.log('Failed to parse join date, leaving as null')
               }
             } catch (e) {
               console.log('Could not parse join date:', joinDateStr, 'Error:', e)
             }
           }
         }
+        // If no join date found, use current date as fallback
+        if (!join_date) {
+          join_date = new Date().toISOString()
+        }
         
-        // Parse last active date
-        let last_active = new Date().toISOString()
+        // Parse last active date - allow empty/null
+        let last_active = null
         if (columnIndices.last_active !== undefined) {
           const lastActiveStr = values[columnIndices.last_active]
           if (lastActiveStr && lastActiveStr.trim()) {
@@ -208,8 +246,12 @@ export async function POST(request: NextRequest) {
             }
           }
         }
+        // If no last active date found, use current date as fallback
+        if (!last_active) {
+          last_active = new Date().toISOString()
+        }
         
-        // Parse last attended date
+        // Parse last attended date - allow empty/null
         let last_attended = null
         if (columnIndices.last_attended !== undefined) {
           const lastAttendedStr = values[columnIndices.last_attended]
@@ -225,18 +267,18 @@ export async function POST(request: NextRequest) {
           }
         }
         
-        // Extract numeric values with better parsing
-        const total_responses = parseNumericValue(values[columnIndices.total_responses], 'total_responses')
-        const responded_yes = parseNumericValue(values[columnIndices.responded_yes], 'responded_yes')
-        const responded_maybe = parseNumericValue(values[columnIndices.responded_maybe], 'responded_maybe')
-        const responded_no = parseNumericValue(values[columnIndices.responded_no], 'responded_no')
-        const meetups_attended = parseNumericValue(values[columnIndices.meetups_attended], 'meetups_attended')
-        const absences = parseNumericValue(values[columnIndices.absences], 'absences')
+        // Extract numeric values with better parsing - allow null for empty values
+        const total_responses = columnIndices.total_responses !== undefined ? parseNumericValue(values[columnIndices.total_responses], 'total_responses') : null
+        const responded_yes = columnIndices.responded_yes !== undefined ? parseNumericValue(values[columnIndices.responded_yes], 'responded_yes') : null
+        const responded_maybe = columnIndices.responded_maybe !== undefined ? parseNumericValue(values[columnIndices.responded_maybe], 'responded_maybe') : null
+        const responded_no = columnIndices.responded_no !== undefined ? parseNumericValue(values[columnIndices.responded_no], 'responded_no') : null
+        const meetups_attended = columnIndices.meetups_attended !== undefined ? parseNumericValue(values[columnIndices.meetups_attended], 'meetups_attended') : null
+        const absences = columnIndices.absences !== undefined ? parseNumericValue(values[columnIndices.absences], 'absences') : null
         
-        // Extract boolean values
-        const has_photo = (values[columnIndices.has_photo] || '').toLowerCase() === 'yes'
-        const is_assistant_organizer = (values[columnIndices.is_assistant_organizer] || '').toLowerCase() === 'yes'
-        const is_on_mailing_list = (values[columnIndices.is_on_mailing_list] || '').toLowerCase() === 'yes'
+        // Extract boolean values - handle empty values properly
+        const has_photo = columnIndices.has_photo !== undefined ? (values[columnIndices.has_photo] || '').toLowerCase() === 'yes' : false
+        const is_assistant_organizer = columnIndices.is_assistant_organizer !== undefined ? (values[columnIndices.is_assistant_organizer] || '').toLowerCase() === 'yes' : false
+        const is_on_mailing_list = columnIndices.is_on_mailing_list !== undefined ? (values[columnIndices.is_on_mailing_list] || '').toLowerCase() === 'yes' : false
         
         const member: any = {
           name: name.trim(),
@@ -254,9 +296,9 @@ export async function POST(request: NextRequest) {
           join_date: join_date,
           last_active: last_active,
           last_attended: last_attended,
-          meetup_user_id: values[columnIndices.meetup_user_id] || null,
-          meetup_member_id: values[columnIndices.meetup_member_id] || null,
-          title: values[columnIndices.title] || null,
+          meetup_user_id: columnIndices.meetup_user_id !== undefined ? (values[columnIndices.meetup_user_id] || '').trim() || null : null,
+          meetup_member_id: columnIndices.meetup_member_id !== undefined ? (values[columnIndices.meetup_member_id] || '').trim() || null : null,
+          title: columnIndices.title !== undefined ? (values[columnIndices.title] || '').trim() || null : null,
           total_responses: total_responses,
           responded_yes: responded_yes,
           responded_maybe: responded_maybe,
@@ -284,36 +326,75 @@ export async function POST(request: NextRequest) {
     
     // Clear existing test data first (optional - remove this if you want to keep existing data)
     console.log('Clearing existing test data...')
-    await supabase
+    const { error: deleteError } = await supabase
       .from('community_members')
       .delete()
       .like('email', '%@meetup-member.local')
     
+    if (deleteError) {
+      console.log('Error clearing existing data:', deleteError)
+    } else {
+      console.log('Cleared existing test data')
+    }
+    
     // Insert members into database
     console.log('Attempting to insert', members.length, 'members')
-    console.log('Sample member:', members[0])
+    console.log('Sample member:', JSON.stringify(members[0], null, 2))
     
-    const { data, error: insertError } = await supabase
-      .from('community_members')
-      .insert(members)
-      .select()
+    // Insert in batches to avoid potential timeout issues
+    const batchSize = 100
+    const batches = []
+    for (let i = 0; i < members.length; i += batchSize) {
+      batches.push(members.slice(i, i + batchSize))
+    }
     
-    if (insertError) {
-      console.error('Database insert error:', insertError)
+    console.log(`Inserting in ${batches.length} batches of ${batchSize}`)
+    
+    const allInsertedData = []
+    const allErrors = []
+    
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i]
+      console.log(`Inserting batch ${i + 1}/${batches.length} with ${batch.length} members`)
+      
+      const { data, error: insertError } = await supabase
+        .from('community_members')
+        .upsert(batch, { 
+          onConflict: 'email',
+          ignoreDuplicates: false 
+        })
+        .select()
+      
+      if (insertError) {
+        console.error(`Database insert error for batch ${i + 1}:`, insertError)
+        allErrors.push(`Batch ${i + 1}: ${insertError.message}`)
+        continue
+      }
+      
+      if (data) {
+        allInsertedData.push(...data)
+        console.log(`Successfully inserted batch ${i + 1}: ${data.length} members`)
+      }
+    }
+    
+    if (allErrors.length > 0) {
+      console.error('Some batches failed:', allErrors)
       return NextResponse.json({ 
-        error: 'Failed to import members to database',
-        details: insertError.message,
-        code: insertError.code
+        error: 'Failed to import some members to database',
+        details: allErrors,
+        imported: allInsertedData.length,
+        total: members.length
       }, { status: 500 })
     }
     
-    console.log('Successfully inserted members:', data?.length)
+    console.log('Successfully inserted members:', allInsertedData.length)
     
     return NextResponse.json({
       success: true,
-      imported: members.length,
+      imported: allInsertedData.length,
+      total: members.length,
       errors: errors.length > 0 ? errors : undefined,
-      data: data
+      data: allInsertedData
     })
     
   } catch (error) {
@@ -327,9 +408,9 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to parse numeric values with better error handling
-function parseNumericValue(value: string | undefined, fieldName: string): number {
+function parseNumericValue(value: string | undefined, fieldName: string): number | null {
   if (!value || value.trim() === '') {
-    return 0
+    return null
   }
   
   try {
@@ -338,19 +419,19 @@ function parseNumericValue(value: string | undefined, fieldName: string): number
     const parsed = parseInt(cleanValue)
     
     if (isNaN(parsed)) {
-      console.log(`Could not parse ${fieldName}: "${value}", using 0`)
-      return 0
+      console.log(`Could not parse ${fieldName}: "${value}", using null`)
+      return null
     }
     
     console.log(`Parsed ${fieldName}: "${value}" -> ${parsed}`)
     return parsed
   } catch (e) {
-    console.log(`Error parsing ${fieldName}: "${value}", using 0`)
-    return 0
+    console.log(`Error parsing ${fieldName}: "${value}", using null`)
+    return null
   }
 }
 
-// Helper function to parse CSV line properly (handle quoted values)
+// Helper function to parse CSV line properly (handle quoted values and empty fields)
 function parseCSVLine(line: string): string[] {
   const result = []
   let current = ''
@@ -370,6 +451,14 @@ function parseCSVLine(line: string): string[] {
   }
   
   result.push(current.trim())
+  
+  // Ensure we have the right number of columns by padding with empty strings if needed
+  // This handles cases where the last few columns are empty
+  const expectedColumns = 25 // Based on the CSV header
+  while (result.length < expectedColumns) {
+    result.push('')
+  }
+  
   return result
 }
 

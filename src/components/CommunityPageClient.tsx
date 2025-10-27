@@ -13,9 +13,11 @@ interface CommunityPageClientProps {
   currentPage: number
   totalPages: number
   totalCount: number
+  searchTerm?: string
+  filterStatus?: string
 }
 
-export default function CommunityPageClient({ members, user, currentPage, totalPages, totalCount }: CommunityPageClientProps) {
+export default function CommunityPageClient({ members, user, currentPage, totalPages, totalCount, searchTerm = '', filterStatus = 'all' }: CommunityPageClientProps) {
   const [showQuickAddForm, setShowQuickAddForm] = useState(false)
   const [showImportForm, setShowImportForm] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -205,6 +207,8 @@ export default function CommunityPageClient({ members, user, currentPage, totalP
         currentPage={currentPage}
         totalPages={totalPages}
         totalCount={totalCount}
+        searchTerm={searchTerm}
+        filterStatus={filterStatus}
       />
 
       {/* Quick Add Member Modal */}
