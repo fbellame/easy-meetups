@@ -34,11 +34,13 @@ export function AuthButton() {
       } catch (err) {
         console.error('AuthButton: Error checking session', err)
         if (mounted) {
+          setUser(null)
           setLoading(false)
         }
       }
     }
 
+    // Check auth immediately
     checkAuth()
 
     // Listen for auth changes
@@ -52,17 +54,8 @@ export function AuthButton() {
       }
     })
 
-    // Fallback timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (mounted) {
-        console.log('AuthButton: Timeout reached, setting loading to false')
-        setLoading(false)
-      }
-    }, 10000) // Increased timeout to 10 seconds
-
     return () => {
       mounted = false
-      clearTimeout(timeout)
       subscription.unsubscribe()
     }
   }, [])

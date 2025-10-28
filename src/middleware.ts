@@ -37,6 +37,22 @@ export async function middleware(request: NextRequest) {
     error: error?.message
   })
 
+  // Refresh the session to ensure cookies are properly set
+  const { data: { session } } = await supabase.auth.getSession()
+  console.log('Middleware: Session check', { 
+    hasSession: !!session, 
+    userEmail: session?.user?.email,
+    pathname: request.nextUrl.pathname
+  })
+
+  // Force refresh the session to ensure cookies are properly set
+  const { data: { session: refreshedSession } } = await supabase.auth.refreshSession()
+  console.log('Middleware: Refreshed session', { 
+    hasSession: !!refreshedSession, 
+    userEmail: refreshedSession?.user?.email,
+    pathname: request.nextUrl.pathname
+  })
+
   // Define protected routes (including root dashboard)
   const protectedRoutes = ['/', '/events', '/hosts', '/speakers', '/community', '/announcements']
   const isProtectedRoute = protectedRoutes.some(route => 

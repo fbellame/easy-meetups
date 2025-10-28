@@ -1,21 +1,20 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeftIcon, PencilIcon, EnvelopeIcon, PhoneIcon, BuildingOfficeIcon, TagIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
-import { requireAuth } from '@/lib/auth'
+import { ArrowLeftIcon, EnvelopeIcon, PhoneIcon, BuildingOfficeIcon, TagIcon, CalendarDaysIcon, PencilIcon } from '@heroicons/react/24/outline'
 import { getCommunityMember } from '@/lib/database'
 import DeleteCommunityMemberButton from '@/components/DeleteCommunityMemberButton'
 
 interface CommunityMemberPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function CommunityMemberPage({ params }: CommunityMemberPageProps) {
-  // Require authentication to access this page
-  await requireAuth()
+  // Await params as it's now a Promise in Next.js 15+
+  const resolvedParams = await params
   
-  const member = await getCommunityMember(params.id)
+  const member = await getCommunityMember(resolvedParams.id)
   
   if (!member) {
     notFound()
@@ -36,13 +35,13 @@ export default async function CommunityMemberPage({ params }: CommunityMemberPag
         </div>
         <div className="flex space-x-3">
           <Link
-            href={`/community/${member.id}/edit`}
+            href={`/community/${resolvedParams.id}/edit`}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             <PencilIcon className="h-5 w-5 mr-2" />
             Edit Member
           </Link>
-          <DeleteCommunityMemberButton memberId={member.id} memberName={member.name} />
+          <DeleteCommunityMemberButton memberId={resolvedParams.id} memberName={member.name} />
         </div>
       </div>
 
