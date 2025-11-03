@@ -180,13 +180,34 @@ export async function getEvents(): Promise<Event[]> {
       throw error
     }
     
+    // Get event IDs to fetch registration counts
+    const eventIds = (data || []).map(e => e.id)
+    
+    // Fetch registration counts for all events
+    // Count registrations with status 'registered' or 'attended' (both count as registrations)
+    const registrationCounts = new Map<string, number>()
+    if (eventIds.length > 0) {
+      const { data: registrations, error: regError } = await supabase
+        .from('event_registrations')
+        .select('event_id')
+        .in('event_id', eventIds)
+        .in('attendance_status', ['registered', 'attended'])
+      
+      if (!regError && registrations) {
+        for (const reg of registrations) {
+          registrationCounts.set(reg.event_id, (registrationCounts.get(reg.event_id) || 0) + 1)
+        }
+      }
+    }
+    
     // Ensure proper date formatting for React Server Components
     const formattedData = (data || []).map(event => ({
       ...event,
       event_date: event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : event.event_date,
       registration_deadline: event.registration_deadline ? new Date(event.registration_deadline).toISOString() : event.registration_deadline,
       created_at: event.created_at ? new Date(event.created_at).toISOString() : event.created_at,
-      updated_at: event.updated_at ? new Date(event.updated_at).toISOString() : event.updated_at
+      updated_at: event.updated_at ? new Date(event.updated_at).toISOString() : event.updated_at,
+      registration_count: registrationCounts.get(event.id) || 0
     }))
     
     return formattedData
@@ -532,13 +553,22 @@ export async function getEventWithDetails(id: string): Promise<EventWithDetails 
     // Get speakers for this event
     const speakers = await getEventSpeakers(id)
     
+    // Get registration count for this event
+    // Count registrations with status 'registered' or 'attended' (both count as registrations)
+    const { count: registrationCount } = await supabase
+      .from('event_registrations')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', id)
+      .in('attendance_status', ['registered', 'attended'])
+    
     // Ensure proper date formatting for React Server Components
     const formattedData = {
       ...data,
       event_date: data.event_date ? new Date(data.event_date).toISOString().split('T')[0] : data.event_date,
       registration_deadline: data.registration_deadline ? new Date(data.registration_deadline).toISOString() : data.registration_deadline,
       created_at: data.created_at ? new Date(data.created_at).toISOString() : data.created_at,
-      updated_at: data.updated_at ? new Date(data.updated_at).toISOString() : data.updated_at
+      updated_at: data.updated_at ? new Date(data.updated_at).toISOString() : data.updated_at,
+      registration_count: registrationCount || 0
     }
     
     return {

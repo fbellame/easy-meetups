@@ -414,9 +414,11 @@ function parseNumericValue(value: string | undefined, fieldName: string): number
   }
   
   try {
-    // Remove any non-numeric characters except minus sign
-    const cleanValue = value.trim().replace(/[^\d-]/g, '')
-    const parsed = parseInt(cleanValue)
+    // Keep digits, optional decimal point, and minus sign
+    // This ensures values like "1.0" stay as 1 instead of 10
+    const cleanValue = value.trim().replace(/[^\d.-]/g, '')
+    const parsedFloat = parseFloat(cleanValue)
+    const parsed = Number.isFinite(parsedFloat) ? Math.round(parsedFloat) : NaN
     
     if (isNaN(parsed)) {
       console.log(`Could not parse ${fieldName}: "${value}", using null`)

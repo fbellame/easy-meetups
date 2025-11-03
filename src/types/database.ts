@@ -70,6 +70,7 @@ export interface Event {
   event_image_url?: string;
   event_banner_url?: string;
   speaker_photos?: SpeakerPhoto[];
+  registration_count?: number; // Count of registrations (computed, not stored in DB)
   created_at: string;
   updated_at: string;
 }

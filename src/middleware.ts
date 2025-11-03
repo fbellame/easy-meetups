@@ -53,8 +53,8 @@ export async function middleware(request: NextRequest) {
     pathname: request.nextUrl.pathname
   })
 
-  // Define protected routes (including root dashboard)
-  const protectedRoutes = ['/', '/events', '/hosts', '/speakers', '/community', '/announcements']
+  // Define protected routes (including org dashboard)
+  const protectedRoutes = ['/', '/events', '/hosts', '/speakers', '/community', '/announcements', '/dashboard']
   const isProtectedRoute = protectedRoutes.some(route => 
     request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
   )

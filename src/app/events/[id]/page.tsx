@@ -196,13 +196,28 @@ export default async function EventPage({ params }: EventPageProps) {
             </div>
           )}
 
-          {/* Capacity */}
+          {/* Capacity & Registrations */}
           {event.max_capacity && (
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Capacity</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Capacity & Registrations</h3>
+              <div className="space-y-3">
+                <div className="flex items-center text-gray-600">
+                  <UserGroupIcon className="h-5 w-5 mr-3" />
+                  <span>Maximum {event.max_capacity} attendees</span>
+                </div>
+                <div className="flex items-center text-gray-600">
+                  <UserGroupIcon className="h-5 w-5 mr-3" />
+                  <span>{event.registration_count || 0}/{event.max_capacity} registered</span>
+                </div>
+              </div>
+            </div>
+          )}
+          {!event.max_capacity && event.registration_count !== undefined && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Registrations</h3>
               <div className="flex items-center text-gray-600">
                 <UserGroupIcon className="h-5 w-5 mr-3" />
-                <span>Maximum {event.max_capacity} attendees</span>
+                <span>{event.registration_count || 0} registered</span>
               </div>
             </div>
           )}

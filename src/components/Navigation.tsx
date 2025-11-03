@@ -14,7 +14,8 @@ import {
 import { AuthButton } from './AuthButton'
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: HomeIcon, color: 'blue' },
+  { name: 'Home', href: '/', icon: HomeIcon, color: 'blue' },
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, color: 'blue' },
   { name: 'Events', href: '/events', icon: CalendarDaysIcon, color: 'orange' },
   { name: 'Hosts', href: '/hosts', icon: BuildingOfficeIcon, color: 'purple' },
   { name: 'Speakers', href: '/speakers', icon: MicrophoneIcon, color: 'green' },

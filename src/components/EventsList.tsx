@@ -128,7 +128,7 @@ export default function EventsList({ events }: EventsListProps) {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <UserGroupIcon className="h-4 w-4 mr-2" />
-                  {event.max_capacity ? `0/${event.max_capacity} registered` : 'No capacity limit'}
+                  {event.max_capacity ? `${event.registration_count || 0}/${event.max_capacity} registered` : `${event.registration_count || 0} registered`}
                 </div>
               </div>
 
