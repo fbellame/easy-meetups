@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('org_attendance_facts_v')
-      .select('event_month, member_id, event_id', { count: 'none' })
+      .select('event_month, member_id, event_id')
     if (from) query = query.gte('attended_at', from)
     query = query.lte('attended_at', to)
 
